@@ -1,26 +1,161 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Logo } from "@/components/Logo";
+import { ArrowRight, Bike, Store, GraduationCap, MapPin, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "Campus Basket — Foodstuff delivered to your hostel, fast." },
+      {
+        name: "description",
+        content:
+          "A campus marketplace where nearby foodstuff shops, students, and bicycle riders meet. Order rice by the milk cup. Get it at your door.",
+      },
+      { property: "og:title", content: "Campus Basket" },
+      {
+        property: "og:description",
+        content: "Foodstuff delivered to your hostel, fast.",
+      },
+    ],
+  }),
+  component: Landing,
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
+const roles = [
+  {
+    to: "/student",
+    title: "I'm a Student",
+    desc: "Browse shops, build your basket, track your rider.",
+    icon: <GraduationCap className="size-5" />,
+    tag: "Most popular",
+    accent: "bg-primary-soft",
+  },
+  {
+    to: "/vendor",
+    title: "I run a Shop",
+    desc: "List products with custom measurements & take orders.",
+    icon: <Store className="size-5" />,
+    accent: "bg-accent-soft",
+  },
+  {
+    to: "/rider",
+    title: "I ride a Bicycle",
+    desc: "Pick up, deliver, earn. Toggle online and go.",
+    icon: <Bike className="size-5" />,
+    accent: "bg-secondary",
+  },
+];
+
+function Landing() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="min-h-screen flex justify-center">
+      <div className="w-full max-w-[1100px] px-5 sm:px-10 py-6 sm:py-10">
+        <header className="flex items-center justify-between">
+          <Logo />
+          <Link
+            to="/student"
+            className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold text-foreground/70 hover:text-foreground"
+          >
+            Open the app <ArrowRight className="size-4" />
+          </Link>
+        </header>
+
+        <section className="mt-10 sm:mt-16 grid sm:grid-cols-[1.2fr_1fr] gap-10 items-center">
+          <div>
+            <span className="chip">
+              <Sparkles className="size-3.5" /> hyperlocal campus marketplace
+            </span>
+            <h1 className="font-display text-[2.4rem] sm:text-[3.4rem] leading-[1.02] mt-4">
+              Foodstuff at your{" "}
+              <span className="relative inline-block">
+                <span className="absolute inset-x-0 bottom-1 h-3 squiggle rounded-md -z-10" />
+                hostel door
+              </span>
+              , fast.
+            </h1>
+            <p className="mt-4 text-foreground/70 text-[1.02rem] max-w-[44ch]">
+              From a milk-cup of rice to a full paint of beans — order from
+              nearby shops by the measure that makes sense to you. Your
+              campus rider does the rest.
+            </p>
+
+            <div className="mt-7 grid sm:grid-cols-3 gap-3">
+              {roles.map((r) => (
+                <Link
+                  key={r.to}
+                  to={r.to}
+                  className={`card-soft p-4 hover:shadow-md transition-shadow group ${r.accent}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-background/70">
+                      {r.icon}
+                    </span>
+                    {r.tag && <span className="chip">{r.tag}</span>}
+                  </div>
+                  <div className="mt-3 font-display text-lg">{r.title}</div>
+                  <div className="text-xs text-foreground/70 mt-0.5">
+                    {r.desc}
+                  </div>
+                  <div className="mt-3 inline-flex items-center gap-1 text-sm font-semibold">
+                    Continue <ArrowRight className="size-4 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            <div className="mt-8 flex items-center gap-4 text-xs text-foreground/60">
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="size-3.5" /> Campus-only delivery
+              </span>
+              <span>•</span>
+              <span>One shop per cart</span>
+              <span>•</span>
+              <span>Cash or wallet</span>
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="card-soft p-5 rotate-[2deg] shadow-xl shadow-primary/10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-foreground/60">Your basket</div>
+                  <div className="font-display text-xl">Mama Tee's</div>
+                </div>
+                <span className="chip-accent chip">18 min</span>
+              </div>
+              <ul className="mt-4 space-y-3 text-sm">
+                {[
+                  { e: "🍚", n: "Local Rice", m: "Half paint", p: "₦4,400" },
+                  { e: "🫘", n: "Honey Beans", m: "1 derica", p: "₦2,200" },
+                  { e: "🌶️", n: "Pepper mix", m: "Blended sachet", p: "₦700" },
+                ].map((x) => (
+                  <li key={x.n} className="flex items-center gap-3">
+                    <span className="h-9 w-9 rounded-xl bg-primary-soft inline-flex items-center justify-center text-lg">
+                      {x.e}
+                    </span>
+                    <div className="flex-1">
+                      <div className="font-medium">{x.n}</div>
+                      <div className="text-xs text-foreground/60">{x.m}</div>
+                    </div>
+                    <div className="font-semibold">{x.p}</div>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 pt-4 border-t border-border/60 flex items-center justify-between">
+                <span className="text-foreground/60 text-sm">Total</span>
+                <span className="font-display text-lg">₦7,300</span>
+              </div>
+            </div>
+            <div className="absolute -bottom-4 -left-2 card-soft px-3 py-2 rotate-[-4deg] text-xs flex items-center gap-2 shadow">
+              <Bike className="size-4 text-primary" /> Tunde is 3 min away
+            </div>
+          </div>
+        </section>
+
+        <footer className="mt-16 text-center text-xs text-foreground/50">
+          © Campus Basket — built for Nigerian campuses.
+        </footer>
+      </div>
     </div>
   );
-}
-
-function Index() {
-  return <PlaceholderIndex />;
 }
