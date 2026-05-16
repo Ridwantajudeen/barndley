@@ -9,19 +9,39 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VendorRouteImport } from './routes/vendor'
 import { Route as StudentRouteImport } from './routes/student'
+import { Route as RiderRouteImport } from './routes/rider'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as VendorIndexRouteImport } from './routes/vendor.index'
 import { Route as StudentIndexRouteImport } from './routes/student.index'
+import { Route as RiderIndexRouteImport } from './routes/rider.index'
+import { Route as VendorProductsRouteImport } from './routes/vendor.products'
+import { Route as VendorOrdersRouteImport } from './routes/vendor.orders'
+import { Route as VendorAnalyticsRouteImport } from './routes/vendor.analytics'
 import { Route as StudentOrdersRouteImport } from './routes/student.orders'
 import { Route as StudentFavoritesRouteImport } from './routes/student.favorites'
 import { Route as StudentCheckoutRouteImport } from './routes/student.checkout'
 import { Route as StudentCartRouteImport } from './routes/student.cart'
+import { Route as RiderTripsRouteImport } from './routes/rider.trips'
+import { Route as RiderProfileRouteImport } from './routes/rider.profile'
+import { Route as RiderEarningsRouteImport } from './routes/rider.earnings'
 import { Route as StudentTrackIdRouteImport } from './routes/student.track.$id'
 import { Route as StudentShopIdRouteImport } from './routes/student.shop.$id'
 
+const VendorRoute = VendorRouteImport.update({
+  id: '/vendor',
+  path: '/vendor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StudentRoute = StudentRouteImport.update({
   id: '/student',
   path: '/student',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RiderRoute = RiderRouteImport.update({
+  id: '/rider',
+  path: '/rider',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -29,10 +49,35 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VendorIndexRoute = VendorIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => VendorRoute,
+} as any)
 const StudentIndexRoute = StudentIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => StudentRoute,
+} as any)
+const RiderIndexRoute = RiderIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => RiderRoute,
+} as any)
+const VendorProductsRoute = VendorProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => VendorRoute,
+} as any)
+const VendorOrdersRoute = VendorOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => VendorRoute,
+} as any)
+const VendorAnalyticsRoute = VendorAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => VendorRoute,
 } as any)
 const StudentOrdersRoute = StudentOrdersRouteImport.update({
   id: '/orders',
@@ -54,6 +99,21 @@ const StudentCartRoute = StudentCartRouteImport.update({
   path: '/cart',
   getParentRoute: () => StudentRoute,
 } as any)
+const RiderTripsRoute = RiderTripsRouteImport.update({
+  id: '/trips',
+  path: '/trips',
+  getParentRoute: () => RiderRoute,
+} as any)
+const RiderProfileRoute = RiderProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => RiderRoute,
+} as any)
+const RiderEarningsRoute = RiderEarningsRouteImport.update({
+  id: '/earnings',
+  path: '/earnings',
+  getParentRoute: () => RiderRoute,
+} as any)
 const StudentTrackIdRoute = StudentTrackIdRouteImport.update({
   id: '/track/$id',
   path: '/track/$id',
@@ -67,34 +127,62 @@ const StudentShopIdRoute = StudentShopIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/rider': typeof RiderRouteWithChildren
   '/student': typeof StudentRouteWithChildren
+  '/vendor': typeof VendorRouteWithChildren
+  '/rider/earnings': typeof RiderEarningsRoute
+  '/rider/profile': typeof RiderProfileRoute
+  '/rider/trips': typeof RiderTripsRoute
   '/student/cart': typeof StudentCartRoute
   '/student/checkout': typeof StudentCheckoutRoute
   '/student/favorites': typeof StudentFavoritesRoute
   '/student/orders': typeof StudentOrdersRoute
+  '/vendor/analytics': typeof VendorAnalyticsRoute
+  '/vendor/orders': typeof VendorOrdersRoute
+  '/vendor/products': typeof VendorProductsRoute
+  '/rider/': typeof RiderIndexRoute
   '/student/': typeof StudentIndexRoute
+  '/vendor/': typeof VendorIndexRoute
   '/student/shop/$id': typeof StudentShopIdRoute
   '/student/track/$id': typeof StudentTrackIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/rider/earnings': typeof RiderEarningsRoute
+  '/rider/profile': typeof RiderProfileRoute
+  '/rider/trips': typeof RiderTripsRoute
   '/student/cart': typeof StudentCartRoute
   '/student/checkout': typeof StudentCheckoutRoute
   '/student/favorites': typeof StudentFavoritesRoute
   '/student/orders': typeof StudentOrdersRoute
+  '/vendor/analytics': typeof VendorAnalyticsRoute
+  '/vendor/orders': typeof VendorOrdersRoute
+  '/vendor/products': typeof VendorProductsRoute
+  '/rider': typeof RiderIndexRoute
   '/student': typeof StudentIndexRoute
+  '/vendor': typeof VendorIndexRoute
   '/student/shop/$id': typeof StudentShopIdRoute
   '/student/track/$id': typeof StudentTrackIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/rider': typeof RiderRouteWithChildren
   '/student': typeof StudentRouteWithChildren
+  '/vendor': typeof VendorRouteWithChildren
+  '/rider/earnings': typeof RiderEarningsRoute
+  '/rider/profile': typeof RiderProfileRoute
+  '/rider/trips': typeof RiderTripsRoute
   '/student/cart': typeof StudentCartRoute
   '/student/checkout': typeof StudentCheckoutRoute
   '/student/favorites': typeof StudentFavoritesRoute
   '/student/orders': typeof StudentOrdersRoute
+  '/vendor/analytics': typeof VendorAnalyticsRoute
+  '/vendor/orders': typeof VendorOrdersRoute
+  '/vendor/products': typeof VendorProductsRoute
+  '/rider/': typeof RiderIndexRoute
   '/student/': typeof StudentIndexRoute
+  '/vendor/': typeof VendorIndexRoute
   '/student/shop/$id': typeof StudentShopIdRoute
   '/student/track/$id': typeof StudentTrackIdRoute
 }
@@ -102,49 +190,93 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/rider'
     | '/student'
+    | '/vendor'
+    | '/rider/earnings'
+    | '/rider/profile'
+    | '/rider/trips'
     | '/student/cart'
     | '/student/checkout'
     | '/student/favorites'
     | '/student/orders'
+    | '/vendor/analytics'
+    | '/vendor/orders'
+    | '/vendor/products'
+    | '/rider/'
     | '/student/'
+    | '/vendor/'
     | '/student/shop/$id'
     | '/student/track/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/rider/earnings'
+    | '/rider/profile'
+    | '/rider/trips'
     | '/student/cart'
     | '/student/checkout'
     | '/student/favorites'
     | '/student/orders'
+    | '/vendor/analytics'
+    | '/vendor/orders'
+    | '/vendor/products'
+    | '/rider'
     | '/student'
+    | '/vendor'
     | '/student/shop/$id'
     | '/student/track/$id'
   id:
     | '__root__'
     | '/'
+    | '/rider'
     | '/student'
+    | '/vendor'
+    | '/rider/earnings'
+    | '/rider/profile'
+    | '/rider/trips'
     | '/student/cart'
     | '/student/checkout'
     | '/student/favorites'
     | '/student/orders'
+    | '/vendor/analytics'
+    | '/vendor/orders'
+    | '/vendor/products'
+    | '/rider/'
     | '/student/'
+    | '/vendor/'
     | '/student/shop/$id'
     | '/student/track/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  RiderRoute: typeof RiderRouteWithChildren
   StudentRoute: typeof StudentRouteWithChildren
+  VendorRoute: typeof VendorRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/vendor': {
+      id: '/vendor'
+      path: '/vendor'
+      fullPath: '/vendor'
+      preLoaderRoute: typeof VendorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/student': {
       id: '/student'
       path: '/student'
       fullPath: '/student'
       preLoaderRoute: typeof StudentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rider': {
+      id: '/rider'
+      path: '/rider'
+      fullPath: '/rider'
+      preLoaderRoute: typeof RiderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -154,12 +286,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vendor/': {
+      id: '/vendor/'
+      path: '/'
+      fullPath: '/vendor/'
+      preLoaderRoute: typeof VendorIndexRouteImport
+      parentRoute: typeof VendorRoute
+    }
     '/student/': {
       id: '/student/'
       path: '/'
       fullPath: '/student/'
       preLoaderRoute: typeof StudentIndexRouteImport
       parentRoute: typeof StudentRoute
+    }
+    '/rider/': {
+      id: '/rider/'
+      path: '/'
+      fullPath: '/rider/'
+      preLoaderRoute: typeof RiderIndexRouteImport
+      parentRoute: typeof RiderRoute
+    }
+    '/vendor/products': {
+      id: '/vendor/products'
+      path: '/products'
+      fullPath: '/vendor/products'
+      preLoaderRoute: typeof VendorProductsRouteImport
+      parentRoute: typeof VendorRoute
+    }
+    '/vendor/orders': {
+      id: '/vendor/orders'
+      path: '/orders'
+      fullPath: '/vendor/orders'
+      preLoaderRoute: typeof VendorOrdersRouteImport
+      parentRoute: typeof VendorRoute
+    }
+    '/vendor/analytics': {
+      id: '/vendor/analytics'
+      path: '/analytics'
+      fullPath: '/vendor/analytics'
+      preLoaderRoute: typeof VendorAnalyticsRouteImport
+      parentRoute: typeof VendorRoute
     }
     '/student/orders': {
       id: '/student/orders'
@@ -189,6 +356,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentCartRouteImport
       parentRoute: typeof StudentRoute
     }
+    '/rider/trips': {
+      id: '/rider/trips'
+      path: '/trips'
+      fullPath: '/rider/trips'
+      preLoaderRoute: typeof RiderTripsRouteImport
+      parentRoute: typeof RiderRoute
+    }
+    '/rider/profile': {
+      id: '/rider/profile'
+      path: '/profile'
+      fullPath: '/rider/profile'
+      preLoaderRoute: typeof RiderProfileRouteImport
+      parentRoute: typeof RiderRoute
+    }
+    '/rider/earnings': {
+      id: '/rider/earnings'
+      path: '/earnings'
+      fullPath: '/rider/earnings'
+      preLoaderRoute: typeof RiderEarningsRouteImport
+      parentRoute: typeof RiderRoute
+    }
     '/student/track/$id': {
       id: '/student/track/$id'
       path: '/track/$id'
@@ -205,6 +393,22 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface RiderRouteChildren {
+  RiderEarningsRoute: typeof RiderEarningsRoute
+  RiderProfileRoute: typeof RiderProfileRoute
+  RiderTripsRoute: typeof RiderTripsRoute
+  RiderIndexRoute: typeof RiderIndexRoute
+}
+
+const RiderRouteChildren: RiderRouteChildren = {
+  RiderEarningsRoute: RiderEarningsRoute,
+  RiderProfileRoute: RiderProfileRoute,
+  RiderTripsRoute: RiderTripsRoute,
+  RiderIndexRoute: RiderIndexRoute,
+}
+
+const RiderRouteWithChildren = RiderRoute._addFileChildren(RiderRouteChildren)
 
 interface StudentRouteChildren {
   StudentCartRoute: typeof StudentCartRoute
@@ -229,9 +433,28 @@ const StudentRouteChildren: StudentRouteChildren = {
 const StudentRouteWithChildren =
   StudentRoute._addFileChildren(StudentRouteChildren)
 
+interface VendorRouteChildren {
+  VendorAnalyticsRoute: typeof VendorAnalyticsRoute
+  VendorOrdersRoute: typeof VendorOrdersRoute
+  VendorProductsRoute: typeof VendorProductsRoute
+  VendorIndexRoute: typeof VendorIndexRoute
+}
+
+const VendorRouteChildren: VendorRouteChildren = {
+  VendorAnalyticsRoute: VendorAnalyticsRoute,
+  VendorOrdersRoute: VendorOrdersRoute,
+  VendorProductsRoute: VendorProductsRoute,
+  VendorIndexRoute: VendorIndexRoute,
+}
+
+const VendorRouteWithChildren =
+  VendorRoute._addFileChildren(VendorRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  RiderRoute: RiderRouteWithChildren,
   StudentRoute: StudentRouteWithChildren,
+  VendorRoute: VendorRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
