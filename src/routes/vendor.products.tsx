@@ -170,9 +170,18 @@ function ProductSheet({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            <input value={emoji} onChange={(e)=>setEmoji(e.target.value)} maxLength={2} className="w-14 h-12 text-2xl text-center rounded-xl bg-card border border-border"/>
-            <span className="text-[0.7rem] text-foreground/50">Emoji icon</span>
+          <div>
+            <label className="text-[0.7rem] font-semibold text-foreground/60 ml-1">ICON</label>
+            <div className="mt-1 flex items-center gap-3">
+              <EmojiPicker
+                value={emoji}
+                onChange={setEmoji}
+                hint={`${finalName} ${finalCategory} ${description}`}
+              />
+              <span className="text-[0.7rem] text-foreground/50 leading-snug">
+                Tap to pick from food emojis. We suggest matches based on the product name & category.
+              </span>
+            </div>
           </div>
           <textarea value={description} onChange={(e)=>setDescription(e.target.value)} placeholder="Short description (optional)" rows={2} className="w-full p-3 rounded-xl bg-card border border-border text-sm"/>
         </div>
