@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
 import { vendorNav } from "@/components/VendorNav";
 import { shops, formatNaira } from "@/lib/mock";
-import { useState } from "react";
+import { catalog } from "@/lib/catalog";
+import { SearchSelect } from "@/components/SearchSelect";
+import { useState, useMemo } from "react";
 import { Plus, X, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/vendor/products")({
