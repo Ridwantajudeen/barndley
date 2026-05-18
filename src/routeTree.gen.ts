@@ -23,6 +23,7 @@ import { Route as StudentOrdersRouteImport } from './routes/student.orders'
 import { Route as StudentFavoritesRouteImport } from './routes/student.favorites'
 import { Route as StudentCheckoutRouteImport } from './routes/student.checkout'
 import { Route as StudentCartRouteImport } from './routes/student.cart'
+import { Route as ShopIdRouteImport } from './routes/shop.$id'
 import { Route as RiderTripsRouteImport } from './routes/rider.trips'
 import { Route as RiderProfileRouteImport } from './routes/rider.profile'
 import { Route as RiderEarningsRouteImport } from './routes/rider.earnings'
@@ -99,6 +100,11 @@ const StudentCartRoute = StudentCartRouteImport.update({
   path: '/cart',
   getParentRoute: () => StudentRoute,
 } as any)
+const ShopIdRoute = ShopIdRouteImport.update({
+  id: '/shop/$id',
+  path: '/shop/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RiderTripsRoute = RiderTripsRouteImport.update({
   id: '/trips',
   path: '/trips',
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/rider/earnings': typeof RiderEarningsRoute
   '/rider/profile': typeof RiderProfileRoute
   '/rider/trips': typeof RiderTripsRoute
+  '/shop/$id': typeof ShopIdRoute
   '/student/cart': typeof StudentCartRoute
   '/student/checkout': typeof StudentCheckoutRoute
   '/student/favorites': typeof StudentFavoritesRoute
@@ -151,6 +158,7 @@ export interface FileRoutesByTo {
   '/rider/earnings': typeof RiderEarningsRoute
   '/rider/profile': typeof RiderProfileRoute
   '/rider/trips': typeof RiderTripsRoute
+  '/shop/$id': typeof ShopIdRoute
   '/student/cart': typeof StudentCartRoute
   '/student/checkout': typeof StudentCheckoutRoute
   '/student/favorites': typeof StudentFavoritesRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/rider/earnings': typeof RiderEarningsRoute
   '/rider/profile': typeof RiderProfileRoute
   '/rider/trips': typeof RiderTripsRoute
+  '/shop/$id': typeof ShopIdRoute
   '/student/cart': typeof StudentCartRoute
   '/student/checkout': typeof StudentCheckoutRoute
   '/student/favorites': typeof StudentFavoritesRoute
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/rider/earnings'
     | '/rider/profile'
     | '/rider/trips'
+    | '/shop/$id'
     | '/student/cart'
     | '/student/checkout'
     | '/student/favorites'
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/rider/earnings'
     | '/rider/profile'
     | '/rider/trips'
+    | '/shop/$id'
     | '/student/cart'
     | '/student/checkout'
     | '/student/favorites'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/rider/earnings'
     | '/rider/profile'
     | '/rider/trips'
+    | '/shop/$id'
     | '/student/cart'
     | '/student/checkout'
     | '/student/favorites'
@@ -254,6 +266,7 @@ export interface RootRouteChildren {
   RiderRoute: typeof RiderRouteWithChildren
   StudentRoute: typeof StudentRouteWithChildren
   VendorRoute: typeof VendorRouteWithChildren
+  ShopIdRoute: typeof ShopIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -356,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentCartRouteImport
       parentRoute: typeof StudentRoute
     }
+    '/shop/$id': {
+      id: '/shop/$id'
+      path: '/shop/$id'
+      fullPath: '/shop/$id'
+      preLoaderRoute: typeof ShopIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/rider/trips': {
       id: '/rider/trips'
       path: '/trips'
@@ -455,7 +475,18 @@ const rootRouteChildren: RootRouteChildren = {
   RiderRoute: RiderRouteWithChildren,
   StudentRoute: StudentRouteWithChildren,
   VendorRoute: VendorRouteWithChildren,
+  ShopIdRoute: ShopIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

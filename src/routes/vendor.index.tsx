@@ -1,9 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
 import { vendorNav } from "@/components/VendorNav";
 import { formatNaira } from "@/lib/mock";
 import { useState } from "react";
-import { Bell, CircleDollarSign, ShoppingBag, Star, TrendingUp } from "lucide-react";
+import { Bell, CircleDollarSign, ShoppingBag, Star, TrendingUp, Link2, Check } from "lucide-react";
 
 export const Route = createFileRoute("/vendor/")({
   head: () => ({ meta: [{ title: "Shop dashboard — Campus Basket" }] }),
@@ -12,6 +12,28 @@ export const Route = createFileRoute("/vendor/")({
 
 function VendorHome() {
   const [open, setOpen] = useState(true);
+  const [copied, setCopied] = useState(false);
+  const shopId = "mama-tee";
+  const shopLink = typeof window !== "undefined" ? `${window.location.origin}/shop/${shopId}` : `https://barndley.lovable.app/shop/${shopId}`;
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shopLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = shopLink;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
     <MobileShell
       nav={vendorNav}
@@ -34,6 +56,22 @@ function VendorHome() {
         >
           <span className={"block h-6 w-6 rounded-full bg-background shadow transition-transform " + (open ? "translate-x-6" : "")} />
         </button>
+      </div>
+
+      <div className="card-soft p-4 mt-3">
+        <div className="text-xs font-semibold text-foreground/70 mb-1.5">Your shop link</div>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 min-w-0 bg-secondary rounded-xl px-3 py-2 text-xs text-foreground/80 truncate">
+            {shopLink}
+          </div>
+          <button
+            onClick={copyLink}
+            className="shrink-0 h-9 w-9 rounded-xl bg-primary text-primary-foreground inline-flex items-center justify-center"
+          >
+            {copied ? <Check className="size-4" /> : <Link2 className="size-4" />}
+          </button>
+        </div>
+        {copied && <p className="text-[0.7rem] text-primary mt-1.5 font-medium">Link copied to clipboard!</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-3 mt-4">
