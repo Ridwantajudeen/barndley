@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
 import { vendorNav } from "@/components/VendorNav";
 import { formatNaira } from "@/lib/mock";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell, CircleDollarSign, ShoppingBag, Star, TrendingUp, Link2, Check } from "lucide-react";
 
 export const Route = createFileRoute("/vendor/")({
@@ -14,7 +14,10 @@ function VendorHome() {
   const [open, setOpen] = useState(true);
   const [copied, setCopied] = useState(false);
   const shopId = "mama-tee";
-  const shopLink = typeof window !== "undefined" ? `${window.location.origin}/shop/${shopId}` : `https://barndley.lovable.app/shop/${shopId}`;
+  const [shopLink, setShopLink] = useState(`/shop/${shopId}`);
+  useEffect(() => {
+    setShopLink(`${window.location.origin}/shop/${shopId}`);
+  }, []);
 
   const copyLink = async () => {
     try {

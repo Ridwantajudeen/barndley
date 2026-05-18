@@ -251,7 +251,10 @@ export const riderRequests = [
   {
     id: "REQ-771",
     shop: "Mama Tee's Foodstuff",
+    shopPhone: "+234 802 990 1245",
     pickup: "Block 4, North Gate Market",
+    student: "Adaeze O.",
+    studentPhone: "+234 805 221 8890",
     drop: "Indep. Hall, Rm 214",
     distanceKm: 1.2,
     payout: 850,
@@ -260,7 +263,10 @@ export const riderRequests = [
   {
     id: "REQ-772",
     shop: "Iya Bunmi Vegetables",
+    shopPhone: "+234 803 117 6620",
     pickup: "Stall 12, South Market",
+    student: "Chidi M.",
+    studentPhone: "+234 807 554 3321",
     drop: "Queens Hall, Rm 18",
     distanceKm: 0.9,
     payout: 700,

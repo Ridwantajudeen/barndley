@@ -43,15 +43,28 @@ function TrackPage() {
           </div>
         </div>
 
-        <div className="p-4 flex items-center gap-3 border-t border-border/60">
-          <div className="h-11 w-11 rounded-full bg-primary-soft flex items-center justify-center font-display">T</div>
-          <div className="flex-1">
-            <div className="font-semibold text-sm">Tunde A.</div>
-            <div className="text-xs text-foreground/60">Bicycle · KP-72 · ⭐ 4.9</div>
-          </div>
-          <button className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center"><MessageCircle className="size-4"/></button>
-          <button className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center"><Phone className="size-4"/></button>
-        </div>
+        <ContactRow
+          avatar="T"
+          name="Tunde A. · Rider"
+          sub="Bicycle · KP-72 · ⭐ 4.9"
+          location="En route · ~6 min away"
+          phone="+234 803 411 0072"
+        />
+
+        <ContactRow
+          avatar="🥬"
+          name="Mama Tee's Foodstuff"
+          sub="Open · ⭐ 4.8 (312)"
+          location="Block 4, North Gate Market"
+          phone="+234 802 990 1245"
+        />
+
+        <ContactRow
+          avatar="🏠"
+          name="You · Delivery address"
+          sub="Independence Hall · Room 214"
+          location="Drop here when rider arrives"
+        />
       </div>
 
       <div className="card-soft p-4 mt-4">
@@ -78,5 +91,38 @@ function TrackPage() {
         Back to orders
       </Link>
     </MobileShell>
+  );
+}
+
+function ContactRow({
+  avatar,
+  name,
+  sub,
+  location,
+  phone,
+}: {
+  avatar: string;
+  name: string;
+  sub: string;
+  location: string;
+  phone?: string;
+}) {
+  return (
+    <div className="p-4 flex items-center gap-3 border-t border-border/60">
+      <div className="h-11 w-11 rounded-full bg-primary-soft flex items-center justify-center font-display text-lg">{avatar}</div>
+      <div className="flex-1 min-w-0">
+        <div className="font-semibold text-sm truncate">{name}</div>
+        <div className="text-xs text-foreground/60 truncate">{sub}</div>
+        <div className="text-[0.7rem] text-foreground/70 mt-0.5 flex items-center gap-1 truncate">
+          <MapPin className="size-3 shrink-0 text-primary"/> {location}
+        </div>
+      </div>
+      {phone && (
+        <>
+          <a href={`sms:${phone}`} className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center"><MessageCircle className="size-4"/></a>
+          <a href={`tel:${phone}`} className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center"><Phone className="size-4"/></a>
+        </>
+      )}
+    </div>
   );
 }
