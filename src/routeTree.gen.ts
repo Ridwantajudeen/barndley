@@ -16,9 +16,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as VendorIndexRouteImport } from './routes/vendor.index'
 import { Route as StudentIndexRouteImport } from './routes/student.index'
 import { Route as RiderIndexRouteImport } from './routes/rider.index'
+import { Route as VendorProfileRouteImport } from './routes/vendor.profile'
 import { Route as VendorProductsRouteImport } from './routes/vendor.products'
 import { Route as VendorOrdersRouteImport } from './routes/vendor.orders'
 import { Route as VendorAnalyticsRouteImport } from './routes/vendor.analytics'
+import { Route as StudentProfileRouteImport } from './routes/student.profile'
 import { Route as StudentOrdersRouteImport } from './routes/student.orders'
 import { Route as StudentFavoritesRouteImport } from './routes/student.favorites'
 import { Route as StudentCheckoutRouteImport } from './routes/student.checkout'
@@ -65,6 +67,11 @@ const RiderIndexRoute = RiderIndexRouteImport.update({
   path: '/',
   getParentRoute: () => RiderRoute,
 } as any)
+const VendorProfileRoute = VendorProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => VendorRoute,
+} as any)
 const VendorProductsRoute = VendorProductsRouteImport.update({
   id: '/products',
   path: '/products',
@@ -79,6 +86,11 @@ const VendorAnalyticsRoute = VendorAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
   getParentRoute: () => VendorRoute,
+} as any)
+const StudentProfileRoute = StudentProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => StudentRoute,
 } as any)
 const StudentOrdersRoute = StudentOrdersRouteImport.update({
   id: '/orders',
@@ -144,9 +156,11 @@ export interface FileRoutesByFullPath {
   '/student/checkout': typeof StudentCheckoutRoute
   '/student/favorites': typeof StudentFavoritesRoute
   '/student/orders': typeof StudentOrdersRoute
+  '/student/profile': typeof StudentProfileRoute
   '/vendor/analytics': typeof VendorAnalyticsRoute
   '/vendor/orders': typeof VendorOrdersRoute
   '/vendor/products': typeof VendorProductsRoute
+  '/vendor/profile': typeof VendorProfileRoute
   '/rider/': typeof RiderIndexRoute
   '/student/': typeof StudentIndexRoute
   '/vendor/': typeof VendorIndexRoute
@@ -163,9 +177,11 @@ export interface FileRoutesByTo {
   '/student/checkout': typeof StudentCheckoutRoute
   '/student/favorites': typeof StudentFavoritesRoute
   '/student/orders': typeof StudentOrdersRoute
+  '/student/profile': typeof StudentProfileRoute
   '/vendor/analytics': typeof VendorAnalyticsRoute
   '/vendor/orders': typeof VendorOrdersRoute
   '/vendor/products': typeof VendorProductsRoute
+  '/vendor/profile': typeof VendorProfileRoute
   '/rider': typeof RiderIndexRoute
   '/student': typeof StudentIndexRoute
   '/vendor': typeof VendorIndexRoute
@@ -186,9 +202,11 @@ export interface FileRoutesById {
   '/student/checkout': typeof StudentCheckoutRoute
   '/student/favorites': typeof StudentFavoritesRoute
   '/student/orders': typeof StudentOrdersRoute
+  '/student/profile': typeof StudentProfileRoute
   '/vendor/analytics': typeof VendorAnalyticsRoute
   '/vendor/orders': typeof VendorOrdersRoute
   '/vendor/products': typeof VendorProductsRoute
+  '/vendor/profile': typeof VendorProfileRoute
   '/rider/': typeof RiderIndexRoute
   '/student/': typeof StudentIndexRoute
   '/vendor/': typeof VendorIndexRoute
@@ -210,9 +228,11 @@ export interface FileRouteTypes {
     | '/student/checkout'
     | '/student/favorites'
     | '/student/orders'
+    | '/student/profile'
     | '/vendor/analytics'
     | '/vendor/orders'
     | '/vendor/products'
+    | '/vendor/profile'
     | '/rider/'
     | '/student/'
     | '/vendor/'
@@ -229,9 +249,11 @@ export interface FileRouteTypes {
     | '/student/checkout'
     | '/student/favorites'
     | '/student/orders'
+    | '/student/profile'
     | '/vendor/analytics'
     | '/vendor/orders'
     | '/vendor/products'
+    | '/vendor/profile'
     | '/rider'
     | '/student'
     | '/vendor'
@@ -251,9 +273,11 @@ export interface FileRouteTypes {
     | '/student/checkout'
     | '/student/favorites'
     | '/student/orders'
+    | '/student/profile'
     | '/vendor/analytics'
     | '/vendor/orders'
     | '/vendor/products'
+    | '/vendor/profile'
     | '/rider/'
     | '/student/'
     | '/vendor/'
@@ -320,6 +344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RiderIndexRouteImport
       parentRoute: typeof RiderRoute
     }
+    '/vendor/profile': {
+      id: '/vendor/profile'
+      path: '/profile'
+      fullPath: '/vendor/profile'
+      preLoaderRoute: typeof VendorProfileRouteImport
+      parentRoute: typeof VendorRoute
+    }
     '/vendor/products': {
       id: '/vendor/products'
       path: '/products'
@@ -340,6 +371,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/vendor/analytics'
       preLoaderRoute: typeof VendorAnalyticsRouteImport
       parentRoute: typeof VendorRoute
+    }
+    '/student/profile': {
+      id: '/student/profile'
+      path: '/profile'
+      fullPath: '/student/profile'
+      preLoaderRoute: typeof StudentProfileRouteImport
+      parentRoute: typeof StudentRoute
     }
     '/student/orders': {
       id: '/student/orders'
@@ -435,6 +473,7 @@ interface StudentRouteChildren {
   StudentCheckoutRoute: typeof StudentCheckoutRoute
   StudentFavoritesRoute: typeof StudentFavoritesRoute
   StudentOrdersRoute: typeof StudentOrdersRoute
+  StudentProfileRoute: typeof StudentProfileRoute
   StudentIndexRoute: typeof StudentIndexRoute
   StudentShopIdRoute: typeof StudentShopIdRoute
   StudentTrackIdRoute: typeof StudentTrackIdRoute
@@ -445,6 +484,7 @@ const StudentRouteChildren: StudentRouteChildren = {
   StudentCheckoutRoute: StudentCheckoutRoute,
   StudentFavoritesRoute: StudentFavoritesRoute,
   StudentOrdersRoute: StudentOrdersRoute,
+  StudentProfileRoute: StudentProfileRoute,
   StudentIndexRoute: StudentIndexRoute,
   StudentShopIdRoute: StudentShopIdRoute,
   StudentTrackIdRoute: StudentTrackIdRoute,
@@ -457,6 +497,7 @@ interface VendorRouteChildren {
   VendorAnalyticsRoute: typeof VendorAnalyticsRoute
   VendorOrdersRoute: typeof VendorOrdersRoute
   VendorProductsRoute: typeof VendorProductsRoute
+  VendorProfileRoute: typeof VendorProfileRoute
   VendorIndexRoute: typeof VendorIndexRoute
 }
 
@@ -464,6 +505,7 @@ const VendorRouteChildren: VendorRouteChildren = {
   VendorAnalyticsRoute: VendorAnalyticsRoute,
   VendorOrdersRoute: VendorOrdersRoute,
   VendorProductsRoute: VendorProductsRoute,
+  VendorProfileRoute: VendorProfileRoute,
   VendorIndexRoute: VendorIndexRoute,
 }
 
