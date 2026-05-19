@@ -3,6 +3,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { vendorNav } from "@/components/VendorNav";
 import { formatNaira } from "@/lib/mock";
 import { Wallet, ArrowDownLeft, ArrowUpRight, MapPin, Phone, Mail, LogOut, ChevronRight, Store, Clock, Star } from "lucide-react";
+import { EditProfileButton, useProfile } from "@/components/EditProfileDialog";
 
 export const Route = createFileRoute("/vendor/profile")({
   head: () => ({ meta: [{ title: "You — Shop" }] }),
@@ -16,21 +17,43 @@ const payouts = [
   { id: "p4", label: "Order #1048 · Mellanby", amount: 4100, when: "Yesterday", kind: "in" as const },
 ];
 
+function initials(name: string) {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase()).join("") || "?";
+}
+
 function VendorProfile() {
+  const [profile, setProfile] = useProfile("cb.vendor.profile", {
+    name: "Mama Tee's Foodstuff",
+    location: "Block 4, North Gate Market",
+    hours: "7:00 — 21:00",
+    phone: "+234 802 990 1245",
+    email: "mamatee@campusbasket.ng",
+  });
+
   return (
     <MobileShell nav={vendorNav} title="Your shop">
       <div className="card-soft p-4 flex items-center gap-3">
-        <div className="h-14 w-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-display text-xl">MT</div>
+        <div className="h-14 w-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-display text-xl">{initials(profile.name)}</div>
         <div className="flex-1 min-w-0">
-          <div className="font-display text-lg truncate">Mama Tee's Foodstuff</div>
+          <div className="font-display text-lg truncate">{profile.name}</div>
           <div className="text-xs text-foreground/60 flex items-center gap-1">
             <Star className="size-3 fill-accent text-accent" /> 4.8 · 312 reviews
           </div>
         </div>
-        <span className="chip">Open</span>
+        <EditProfileButton
+          title="Edit shop profile"
+          values={profile}
+          onSave={setProfile}
+          fields={[
+            { key: "name", label: "Shop name" },
+            { key: "location", label: "Location" },
+            { key: "hours", label: "Opening hours" },
+            { key: "phone", label: "Phone", type: "tel" },
+            { key: "email", label: "Email", type: "email" },
+          ]}
+        />
       </div>
 
-      {/* Wallet */}
       <div className="card-soft p-5 mt-4 bg-gradient-to-br from-primary-soft to-accent-soft">
         <div className="flex items-center gap-2 text-xs text-foreground/70">
           <Wallet className="size-3.5" /> Shop wallet
@@ -64,11 +87,11 @@ function VendorProfile() {
       </div>
 
       <div className="card-soft mt-4 divide-y divide-border/60">
-        <Row icon={<Store className="size-4" />} label="Shop name" value="Mama Tee's Foodstuff" />
-        <Row icon={<MapPin className="size-4" />} label="Location" value="Block 4, North Gate Market" />
-        <Row icon={<Clock className="size-4" />} label="Hours" value="7:00 — 21:00" />
-        <Row icon={<Phone className="size-4" />} label="Phone" value="+234 802 990 1245" />
-        <Row icon={<Mail className="size-4" />} label="Email" value="mamatee@campusbasket.ng" />
+        <Row icon={<Store className="size-4" />} label="Shop name" value={profile.name} />
+        <Row icon={<MapPin className="size-4" />} label="Location" value={profile.location} />
+        <Row icon={<Clock className="size-4" />} label="Hours" value={profile.hours} />
+        <Row icon={<Phone className="size-4" />} label="Phone" value={profile.phone} />
+        <Row icon={<Mail className="size-4" />} label="Email" value={profile.email} />
       </div>
 
       <button className="mt-4 w-full py-3 rounded-xl bg-secondary text-sm font-semibold inline-flex items-center justify-center gap-2">
