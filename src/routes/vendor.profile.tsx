@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
 import { vendorNav } from "@/components/VendorNav";
 import { formatNaira } from "@/lib/mock";
@@ -62,7 +62,7 @@ function VendorProfile() {
         <div className="text-[0.7rem] text-foreground/60 mt-1">Next payout: Friday</div>
         <div className="flex gap-2 mt-4">
           <button className="flex-1 py-2.5 rounded-xl bg-foreground text-background text-sm font-semibold">Withdraw</button>
-          <button className="flex-1 py-2.5 rounded-xl bg-background/70 text-sm font-semibold">Statement</button>
+          <Link to="/vendor/statement" className="flex-1 py-2.5 rounded-xl bg-background/70 text-sm font-semibold text-center">Statement</Link>
         </div>
       </div>
 
