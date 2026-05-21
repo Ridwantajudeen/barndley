@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as VendorIndexRouteImport } from './routes/vendor.index'
 import { Route as StudentIndexRouteImport } from './routes/student.index'
 import { Route as RiderIndexRouteImport } from './routes/rider.index'
+import { Route as VendorStatementRouteImport } from './routes/vendor.statement'
 import { Route as VendorProfileRouteImport } from './routes/vendor.profile'
 import { Route as VendorProductsRouteImport } from './routes/vendor.products'
 import { Route as VendorOrdersRouteImport } from './routes/vendor.orders'
@@ -27,6 +28,7 @@ import { Route as StudentCheckoutRouteImport } from './routes/student.checkout'
 import { Route as StudentCartRouteImport } from './routes/student.cart'
 import { Route as ShopIdRouteImport } from './routes/shop.$id'
 import { Route as RiderTripsRouteImport } from './routes/rider.trips'
+import { Route as RiderStatementRouteImport } from './routes/rider.statement'
 import { Route as RiderProfileRouteImport } from './routes/rider.profile'
 import { Route as RiderEarningsRouteImport } from './routes/rider.earnings'
 import { Route as StudentTrackIdRouteImport } from './routes/student.track.$id'
@@ -66,6 +68,11 @@ const RiderIndexRoute = RiderIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => RiderRoute,
+} as any)
+const VendorStatementRoute = VendorStatementRouteImport.update({
+  id: '/statement',
+  path: '/statement',
+  getParentRoute: () => VendorRoute,
 } as any)
 const VendorProfileRoute = VendorProfileRouteImport.update({
   id: '/profile',
@@ -122,6 +129,11 @@ const RiderTripsRoute = RiderTripsRouteImport.update({
   path: '/trips',
   getParentRoute: () => RiderRoute,
 } as any)
+const RiderStatementRoute = RiderStatementRouteImport.update({
+  id: '/statement',
+  path: '/statement',
+  getParentRoute: () => RiderRoute,
+} as any)
 const RiderProfileRoute = RiderProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -150,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/vendor': typeof VendorRouteWithChildren
   '/rider/earnings': typeof RiderEarningsRoute
   '/rider/profile': typeof RiderProfileRoute
+  '/rider/statement': typeof RiderStatementRoute
   '/rider/trips': typeof RiderTripsRoute
   '/shop/$id': typeof ShopIdRoute
   '/student/cart': typeof StudentCartRoute
@@ -161,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/vendor/orders': typeof VendorOrdersRoute
   '/vendor/products': typeof VendorProductsRoute
   '/vendor/profile': typeof VendorProfileRoute
+  '/vendor/statement': typeof VendorStatementRoute
   '/rider/': typeof RiderIndexRoute
   '/student/': typeof StudentIndexRoute
   '/vendor/': typeof VendorIndexRoute
@@ -171,6 +185,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/rider/earnings': typeof RiderEarningsRoute
   '/rider/profile': typeof RiderProfileRoute
+  '/rider/statement': typeof RiderStatementRoute
   '/rider/trips': typeof RiderTripsRoute
   '/shop/$id': typeof ShopIdRoute
   '/student/cart': typeof StudentCartRoute
@@ -182,6 +197,7 @@ export interface FileRoutesByTo {
   '/vendor/orders': typeof VendorOrdersRoute
   '/vendor/products': typeof VendorProductsRoute
   '/vendor/profile': typeof VendorProfileRoute
+  '/vendor/statement': typeof VendorStatementRoute
   '/rider': typeof RiderIndexRoute
   '/student': typeof StudentIndexRoute
   '/vendor': typeof VendorIndexRoute
@@ -196,6 +212,7 @@ export interface FileRoutesById {
   '/vendor': typeof VendorRouteWithChildren
   '/rider/earnings': typeof RiderEarningsRoute
   '/rider/profile': typeof RiderProfileRoute
+  '/rider/statement': typeof RiderStatementRoute
   '/rider/trips': typeof RiderTripsRoute
   '/shop/$id': typeof ShopIdRoute
   '/student/cart': typeof StudentCartRoute
@@ -207,6 +224,7 @@ export interface FileRoutesById {
   '/vendor/orders': typeof VendorOrdersRoute
   '/vendor/products': typeof VendorProductsRoute
   '/vendor/profile': typeof VendorProfileRoute
+  '/vendor/statement': typeof VendorStatementRoute
   '/rider/': typeof RiderIndexRoute
   '/student/': typeof StudentIndexRoute
   '/vendor/': typeof VendorIndexRoute
@@ -222,6 +240,7 @@ export interface FileRouteTypes {
     | '/vendor'
     | '/rider/earnings'
     | '/rider/profile'
+    | '/rider/statement'
     | '/rider/trips'
     | '/shop/$id'
     | '/student/cart'
@@ -233,6 +252,7 @@ export interface FileRouteTypes {
     | '/vendor/orders'
     | '/vendor/products'
     | '/vendor/profile'
+    | '/vendor/statement'
     | '/rider/'
     | '/student/'
     | '/vendor/'
@@ -243,6 +263,7 @@ export interface FileRouteTypes {
     | '/'
     | '/rider/earnings'
     | '/rider/profile'
+    | '/rider/statement'
     | '/rider/trips'
     | '/shop/$id'
     | '/student/cart'
@@ -254,6 +275,7 @@ export interface FileRouteTypes {
     | '/vendor/orders'
     | '/vendor/products'
     | '/vendor/profile'
+    | '/vendor/statement'
     | '/rider'
     | '/student'
     | '/vendor'
@@ -267,6 +289,7 @@ export interface FileRouteTypes {
     | '/vendor'
     | '/rider/earnings'
     | '/rider/profile'
+    | '/rider/statement'
     | '/rider/trips'
     | '/shop/$id'
     | '/student/cart'
@@ -278,6 +301,7 @@ export interface FileRouteTypes {
     | '/vendor/orders'
     | '/vendor/products'
     | '/vendor/profile'
+    | '/vendor/statement'
     | '/rider/'
     | '/student/'
     | '/vendor/'
@@ -343,6 +367,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/rider/'
       preLoaderRoute: typeof RiderIndexRouteImport
       parentRoute: typeof RiderRoute
+    }
+    '/vendor/statement': {
+      id: '/vendor/statement'
+      path: '/statement'
+      fullPath: '/vendor/statement'
+      preLoaderRoute: typeof VendorStatementRouteImport
+      parentRoute: typeof VendorRoute
     }
     '/vendor/profile': {
       id: '/vendor/profile'
@@ -421,6 +452,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RiderTripsRouteImport
       parentRoute: typeof RiderRoute
     }
+    '/rider/statement': {
+      id: '/rider/statement'
+      path: '/statement'
+      fullPath: '/rider/statement'
+      preLoaderRoute: typeof RiderStatementRouteImport
+      parentRoute: typeof RiderRoute
+    }
     '/rider/profile': {
       id: '/rider/profile'
       path: '/profile'
@@ -455,6 +493,7 @@ declare module '@tanstack/react-router' {
 interface RiderRouteChildren {
   RiderEarningsRoute: typeof RiderEarningsRoute
   RiderProfileRoute: typeof RiderProfileRoute
+  RiderStatementRoute: typeof RiderStatementRoute
   RiderTripsRoute: typeof RiderTripsRoute
   RiderIndexRoute: typeof RiderIndexRoute
 }
@@ -462,6 +501,7 @@ interface RiderRouteChildren {
 const RiderRouteChildren: RiderRouteChildren = {
   RiderEarningsRoute: RiderEarningsRoute,
   RiderProfileRoute: RiderProfileRoute,
+  RiderStatementRoute: RiderStatementRoute,
   RiderTripsRoute: RiderTripsRoute,
   RiderIndexRoute: RiderIndexRoute,
 }
@@ -498,6 +538,7 @@ interface VendorRouteChildren {
   VendorOrdersRoute: typeof VendorOrdersRoute
   VendorProductsRoute: typeof VendorProductsRoute
   VendorProfileRoute: typeof VendorProfileRoute
+  VendorStatementRoute: typeof VendorStatementRoute
   VendorIndexRoute: typeof VendorIndexRoute
 }
 
@@ -506,6 +547,7 @@ const VendorRouteChildren: VendorRouteChildren = {
   VendorOrdersRoute: VendorOrdersRoute,
   VendorProductsRoute: VendorProductsRoute,
   VendorProfileRoute: VendorProfileRoute,
+  VendorStatementRoute: VendorStatementRoute,
   VendorIndexRoute: VendorIndexRoute,
 }
 
