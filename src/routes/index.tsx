@@ -5,16 +5,11 @@ import { ArrowRight, Bike, Store, GraduationCap, MapPin, Sparkles } from "lucide
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Campus Basket — Foodstuff delivered to your hostel, fast." },
+      { title: "gomarkket — Foodstuff delivered to your hostel, fast." },
       {
         name: "description",
         content:
           "A campus marketplace where nearby foodstuff shops, students, and bicycle riders meet. Order rice by the milk cup. Get it at your door.",
-      },
-      { property: "og:title", content: "Campus Basket" },
-      {
-        property: "og:description",
-        content: "Foodstuff delivered to your hostel, fast.",
       },
     ],
   }),
@@ -23,7 +18,7 @@ export const Route = createFileRoute("/")({
 
 const roles = [
   {
-    to: "/student",
+    id: "student" as const,
     title: "I'm a Student",
     desc: "Browse shops, build your basket, track your rider.",
     icon: <GraduationCap className="size-5" />,
@@ -31,14 +26,14 @@ const roles = [
     accent: "bg-primary-soft",
   },
   {
-    to: "/vendor",
+    id: "vendor" as const,
     title: "I run a Shop",
     desc: "List products with custom measurements & take orders.",
     icon: <Store className="size-5" />,
     accent: "bg-accent-soft",
   },
   {
-    to: "/rider",
+    id: "rider" as const,
     title: "I ride a Bicycle",
     desc: "Pick up, deliver, earn. Toggle online and go.",
     icon: <Bike className="size-5" />,
@@ -52,12 +47,22 @@ function Landing() {
       <div className="w-full max-w-[1100px] px-5 sm:px-10 py-6 sm:py-10">
         <header className="flex items-center justify-between">
           <Logo />
-          <Link
-            to="/student"
-            className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold text-foreground/70 hover:text-foreground"
-          >
-            Open the app <ArrowRight className="size-4" />
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/auth"
+              search={{ mode: "signin", role: "student" }}
+              className="text-sm font-semibold text-foreground/70 hover:text-foreground"
+            >
+              Sign in
+            </Link>
+            <Link
+              to="/auth"
+              search={{ mode: "signup", role: "student" }}
+              className="inline-flex items-center gap-1 rounded-xl bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            >
+              Get started <ArrowRight className="size-4" />
+            </Link>
+          </div>
         </header>
 
         <section className="mt-10 sm:mt-16 grid sm:grid-cols-[1.2fr_1fr] gap-10 items-center">
@@ -82,8 +87,9 @@ function Landing() {
             <div className="mt-7 grid sm:grid-cols-3 gap-3">
               {roles.map((r) => (
                 <Link
-                  key={r.to}
-                  to={r.to}
+                  key={r.id}
+                  to="/auth"
+                  search={{ mode: "signup", role: r.id }}
                   className={`card-soft p-4 hover:shadow-md transition-shadow group ${r.accent}`}
                 >
                   <div className="flex items-center justify-between">
@@ -153,7 +159,7 @@ function Landing() {
         </section>
 
         <footer className="mt-16 text-center text-xs text-foreground/50">
-          © Campus Basket — built for Nigerian campuses.
+          © gomarkket — built for Nigerian campuses.
         </footer>
       </div>
     </div>

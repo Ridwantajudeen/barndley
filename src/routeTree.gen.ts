@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as VendorRouteImport } from './routes/vendor'
 import { Route as StudentRouteImport } from './routes/student'
 import { Route as RiderRouteImport } from './routes/rider'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VendorIndexRouteImport } from './routes/vendor.index'
 import { Route as StudentIndexRouteImport } from './routes/student.index'
@@ -47,6 +48,11 @@ const StudentRoute = StudentRouteImport.update({
 const RiderRoute = RiderRouteImport.update({
   id: '/rider',
   path: '/rider',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -157,6 +163,7 @@ const StudentShopIdRoute = StudentShopIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/rider': typeof RiderRouteWithChildren
   '/student': typeof StudentRouteWithChildren
   '/vendor': typeof VendorRouteWithChildren
@@ -183,6 +190,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/rider/earnings': typeof RiderEarningsRoute
   '/rider/profile': typeof RiderProfileRoute
   '/rider/statement': typeof RiderStatementRoute
@@ -207,6 +215,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/rider': typeof RiderRouteWithChildren
   '/student': typeof StudentRouteWithChildren
   '/vendor': typeof VendorRouteWithChildren
@@ -235,6 +244,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
     | '/rider'
     | '/student'
     | '/vendor'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth'
     | '/rider/earnings'
     | '/rider/profile'
     | '/rider/statement'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/auth'
     | '/rider'
     | '/student'
     | '/vendor'
@@ -311,6 +323,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
   RiderRoute: typeof RiderRouteWithChildren
   StudentRoute: typeof StudentRouteWithChildren
   VendorRoute: typeof VendorRouteWithChildren
@@ -338,6 +351,13 @@ declare module '@tanstack/react-router' {
       path: '/rider'
       fullPath: '/rider'
       preLoaderRoute: typeof RiderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -556,6 +576,7 @@ const VendorRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
   RiderRoute: RiderRouteWithChildren,
   StudentRoute: StudentRouteWithChildren,
   VendorRoute: VendorRouteWithChildren,
