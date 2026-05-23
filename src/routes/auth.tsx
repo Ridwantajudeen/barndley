@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 type Role = "student" | "vendor" | "rider";
 
-const ROLES: { id: Role; label: string; icon: JSX.Element; desc: string }[] = [
+const ROLES: { id: Role; label: string; icon: React.ReactNode; desc: string }[] = [
   { id: "student", label: "Student", icon: <GraduationCap className="size-4" />, desc: "Order foodstuff" },
   { id: "vendor", label: "Shop", icon: <Store className="size-4" />, desc: "Sell on campus" },
   { id: "rider", label: "Rider", icon: <Bike className="size-4" />, desc: "Deliver & earn" },
