@@ -42,8 +42,15 @@ function RiderHome() {
       </div>
 
       {active ? (
-        <div className="card-soft p-4 mt-5">
-          <div className="text-xs text-foreground/60">Active trip · {active.id}</div>
+        <div className={"card-soft p-4 mt-5 " + (active.bundle ? "ring-2 ring-accent bg-accent-soft/30" : "")}>
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-foreground/60">Active trip · {active.id}</div>
+            {active.bundle && (
+              <span className="chip chip-accent inline-flex items-center gap-1">
+                <Sparkles className="size-3"/> Bundle · {active.pickups?.length ?? 0} shops
+              </span>
+            )}
+          </div>
           <div className="font-display text-lg mt-1">{active.shop}</div>
 
           <ol className="mt-4 space-y-3">
@@ -60,8 +67,22 @@ function RiderHome() {
             })}
           </ol>
 
-          {active && (
-            <div className="mt-4 space-y-2">
+          <div className="mt-4 space-y-2">
+            {active.bundle && active.pickups ? (
+              <>
+                <div className="text-[0.65rem] uppercase tracking-wide text-foreground/60 font-semibold">Pickups in order</div>
+                {active.pickups.map((p, i) => (
+                  <ContactCard
+                    key={p.shop}
+                    icon={<span className="text-xs font-bold">{i+1}</span>}
+                    title={p.shop}
+                    subtitle={`${p.address} · ${p.items} item${p.items>1?"s":""}`}
+                    tag={`Stop ${i+1}`}
+                    phone={p.phone}
+                  />
+                ))}
+              </>
+            ) : (
               <ContactCard
                 icon={<Store className="size-4"/>}
                 title={active.shop}
@@ -69,16 +90,16 @@ function RiderHome() {
                 tag="Pickup"
                 phone={active.shopPhone}
               />
-              <ContactCard
-                icon={<User className="size-4"/>}
-                title={active.student}
-                subtitle={active.drop}
-                tag="Drop-off"
-                phone={active.studentPhone}
-                tone="primary"
-              />
-            </div>
-          )}
+            )}
+            <ContactCard
+              icon={<User className="size-4"/>}
+              title={active.student}
+              subtitle={active.drop}
+              tag="Drop-off"
+              phone={active.studentPhone}
+              tone="primary"
+            />
+          </div>
 
           <div className="mt-4 flex gap-2">
             <button
