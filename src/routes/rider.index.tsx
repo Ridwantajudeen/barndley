@@ -3,7 +3,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { riderNav } from "@/components/RiderNav";
 import { riderRequests, formatNaira, orderStages } from "@/lib/mock";
 import { useState } from "react";
-import { Bike, MapPin, Navigation, Check, Phone, MessageCircle, Store, User } from "lucide-react";
+import { Bike, MapPin, Navigation, Check, Phone, MessageCircle, Store, User, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/rider/")({
   head: () => ({ meta: [{ title: "Rider — Campus Basket" }] }),
