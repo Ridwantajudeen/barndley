@@ -1,8 +1,10 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import type { Product, Measurement, Shop } from "./mock";
 
 export type CartLine = {
   shopId: string;
+  shopName: string;
+  shopEmoji: string;
   productId: string;
   productName: string;
   emoji: string;
@@ -10,9 +12,9 @@ export type CartLine = {
   qty: number;
 };
 
-type CartState = { shopId: string | null; lines: CartLine[] };
+type CartState = { lines: CartLine[] };
 
-let state: CartState = { shopId: null, lines: [] };
+let state: CartState = { lines: [] };
 const listeners = new Set<() => void>();
 
 function persist() {
@@ -23,7 +25,13 @@ function load() {
   if (typeof window === "undefined") return;
   try {
     const raw = localStorage.getItem("cb-cart");
-    if (raw) state = JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Migrate old shape { shopId, lines }
+      state = { lines: Array.isArray(parsed?.lines) ? parsed.lines : [] };
+      // Drop lines missing the new shopName field
+      state.lines = state.lines.filter((l) => l && l.shopId && l.productId);
+    }
   } catch {}
 }
 load();
@@ -33,50 +41,44 @@ const emit = () => listeners.forEach((l) => l());
 export const cart = {
   get: () => state,
   add(shop: Shop, p: Product, m: Measurement, qty = 1) {
-    if (state.shopId && state.shopId !== shop.id) {
-      // Different shop — confirm replace
-      const ok =
-        typeof window === "undefined"
-          ? true
-          : confirm(
-              `Your cart has items from another shop. Replace with items from ${shop.name}?`,
-            );
-      if (!ok) return;
-      state = { shopId: shop.id, lines: [] };
-    }
-    if (!state.shopId) state.shopId = shop.id;
     const existing = state.lines.find(
-      (l) => l.productId === p.id && l.measurement.id === m.id,
+      (l) =>
+        l.shopId === shop.id &&
+        l.productId === p.id &&
+        l.measurement.id === m.id,
     );
     if (existing) existing.qty += qty;
     else
       state.lines.push({
         shopId: shop.id,
+        shopName: shop.name,
+        shopEmoji: shop.emoji,
         productId: p.id,
         productName: p.name,
         emoji: p.emoji,
         measurement: m,
         qty,
       });
-    state = { ...state, lines: [...state.lines] };
+    state = { lines: [...state.lines] };
     persist();
     emit();
   },
-  setQty(productId: string, measurementId: string, qty: number) {
+  setQty(shopId: string, productId: string, measurementId: string, qty: number) {
     state.lines = state.lines
       .map((l) =>
-        l.productId === productId && l.measurement.id === measurementId
+        l.shopId === shopId &&
+        l.productId === productId &&
+        l.measurement.id === measurementId
           ? { ...l, qty }
           : l,
       )
       .filter((l) => l.qty > 0);
-    if (state.lines.length === 0) state.shopId = null;
     state = { ...state };
     persist();
     emit();
   },
   clear() {
-    state = { shopId: null, lines: [] };
+    state = { lines: [] };
     persist();
     emit();
   },
@@ -90,10 +92,30 @@ export function useCart() {
   const [snap, setSnap] = useState(state);
   useEffect(() => {
     const unsub = cart.subscribe(() => setSnap({ ...cart.get() }));
-    return () => { unsub(); };
+    return () => {
+      unsub();
+    };
   }, []);
   return snap;
 }
 
 export const cartTotal = (lines: CartLine[]) =>
   lines.reduce((s, l) => s + l.measurement.price * l.qty, 0);
+
+export function groupByShop(lines: CartLine[]) {
+  const map = new Map<string, { shopId: string; shopName: string; shopEmoji: string; lines: CartLine[] }>();
+  for (const l of lines) {
+    const g = map.get(l.shopId) ?? {
+      shopId: l.shopId,
+      shopName: l.shopName,
+      shopEmoji: l.shopEmoji,
+      lines: [],
+    };
+    g.lines.push(l);
+    map.set(l.shopId, g);
+  }
+  return Array.from(map.values());
+}
+
+export const isBundle = (lines: CartLine[]) =>
+  new Set(lines.map((l) => l.shopId)).size > 1;

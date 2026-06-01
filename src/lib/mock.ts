@@ -247,7 +247,22 @@ export const sampleOrders = [
   },
 ];
 
-export const riderRequests = [
+export type RiderRequest = {
+  id: string;
+  shop: string;
+  shopPhone: string;
+  pickup: string;
+  student: string;
+  studentPhone: string;
+  drop: string;
+  distanceKm: number;
+  payout: number;
+  items: number;
+  bundle?: boolean;
+  pickups?: { shop: string; phone: string; address: string; items: number }[];
+};
+
+export const riderRequests: RiderRequest[] = [
   {
     id: "REQ-771",
     shop: "Mama Tee's Foodstuff",
@@ -259,6 +274,24 @@ export const riderRequests = [
     distanceKm: 1.2,
     payout: 850,
     items: 4,
+  },
+  {
+    id: "REQ-773",
+    shop: "Bundle · 3 shops",
+    shopPhone: "+234 802 990 1245",
+    pickup: "Multi-stop route",
+    student: "Funmi A.",
+    studentPhone: "+234 809 442 1170",
+    drop: "Mellanby Hall, Rm 7",
+    distanceKm: 2.4,
+    payout: 1450,
+    items: 6,
+    bundle: true,
+    pickups: [
+      { shop: "Mama Tee's Foodstuff", phone: "+234 802 990 1245", address: "Block 4, North Gate Market", items: 2 },
+      { shop: "Brother K Provisions", phone: "+234 803 220 1188", address: "Stall 9, Campus Gate", items: 3 },
+      { shop: "Iya Bunmi Vegetables", phone: "+234 803 117 6620", address: "Stall 12, South Market", items: 1 },
+    ],
   },
   {
     id: "REQ-772",

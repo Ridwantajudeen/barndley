@@ -3,7 +3,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { riderNav } from "@/components/RiderNav";
 import { riderRequests, formatNaira, orderStages } from "@/lib/mock";
 import { useState } from "react";
-import { Bike, MapPin, Navigation, Check, Phone, MessageCircle, Store, User } from "lucide-react";
+import { Bike, MapPin, Navigation, Check, Phone, MessageCircle, Store, User, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/rider/")({
   head: () => ({ meta: [{ title: "Rider — Campus Basket" }] }),
@@ -42,8 +42,15 @@ function RiderHome() {
       </div>
 
       {active ? (
-        <div className="card-soft p-4 mt-5">
-          <div className="text-xs text-foreground/60">Active trip · {active.id}</div>
+        <div className={"card-soft p-4 mt-5 " + (active.bundle ? "ring-2 ring-accent bg-accent-soft/30" : "")}>
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-foreground/60">Active trip · {active.id}</div>
+            {active.bundle && (
+              <span className="chip chip-accent inline-flex items-center gap-1">
+                <Sparkles className="size-3"/> Bundle · {active.pickups?.length ?? 0} shops
+              </span>
+            )}
+          </div>
           <div className="font-display text-lg mt-1">{active.shop}</div>
 
           <ol className="mt-4 space-y-3">
@@ -60,8 +67,22 @@ function RiderHome() {
             })}
           </ol>
 
-          {active && (
-            <div className="mt-4 space-y-2">
+          <div className="mt-4 space-y-2">
+            {active.bundle && active.pickups ? (
+              <>
+                <div className="text-[0.65rem] uppercase tracking-wide text-foreground/60 font-semibold">Pickups in order</div>
+                {active.pickups.map((p, i) => (
+                  <ContactCard
+                    key={p.shop}
+                    icon={<span className="text-xs font-bold">{i+1}</span>}
+                    title={p.shop}
+                    subtitle={`${p.address} · ${p.items} item${p.items>1?"s":""}`}
+                    tag={`Stop ${i+1}`}
+                    phone={p.phone}
+                  />
+                ))}
+              </>
+            ) : (
               <ContactCard
                 icon={<Store className="size-4"/>}
                 title={active.shop}
@@ -69,16 +90,16 @@ function RiderHome() {
                 tag="Pickup"
                 phone={active.shopPhone}
               />
-              <ContactCard
-                icon={<User className="size-4"/>}
-                title={active.student}
-                subtitle={active.drop}
-                tag="Drop-off"
-                phone={active.studentPhone}
-                tone="primary"
-              />
-            </div>
-          )}
+            )}
+            <ContactCard
+              icon={<User className="size-4"/>}
+              title={active.student}
+              subtitle={active.drop}
+              tag="Drop-off"
+              phone={active.studentPhone}
+              tone="primary"
+            />
+          </div>
 
           <div className="mt-4 flex gap-2">
             <button
@@ -103,26 +124,46 @@ function RiderHome() {
           {online && (
             <div className="space-y-3">
               {riderRequests.map((r) => (
-                <div key={r.id} className="card-soft p-4">
-                  <div className="flex items-start justify-between">
+                <div key={r.id} className={"card-soft p-4 " + (r.bundle ? "ring-2 ring-accent bg-accent-soft/30" : "")}>
+                  <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="font-semibold text-sm truncate">{r.shop}</div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {r.bundle && (
+                          <span className="chip chip-accent inline-flex items-center gap-1">
+                            <Sparkles className="size-3"/> Bundle · {r.pickups?.length ?? 0} shops
+                          </span>
+                        )}
+                      </div>
+                      <div className="font-semibold text-sm truncate mt-1">{r.shop}</div>
                       <div className="text-[0.7rem] text-foreground/60">Request {r.id}</div>
                     </div>
-                    <div className="text-right shrink-0 ml-3">
+                    <div className="text-right shrink-0">
                       <div className="font-display text-lg">{formatNaira(r.payout)}</div>
                       <div className="text-xs text-foreground/60">{r.distanceKm} km · {r.items} items</div>
                     </div>
                   </div>
 
                   <div className="mt-3 space-y-2">
-                    <PartyRow
-                      icon={<Store className="size-3.5"/>}
-                      label="Pickup"
-                      name={r.shop}
-                      address={r.pickup}
-                      phone={r.shopPhone}
-                    />
+                    {r.bundle && r.pickups ? (
+                      r.pickups.map((p, i) => (
+                        <PartyRow
+                          key={p.shop}
+                          icon={<span className="text-[0.65rem] font-bold">{i+1}</span>}
+                          label={`Stop ${i+1}`}
+                          name={p.shop}
+                          address={`${p.address} · ${p.items} item${p.items>1?"s":""}`}
+                          phone={p.phone}
+                        />
+                      ))
+                    ) : (
+                      <PartyRow
+                        icon={<Store className="size-3.5"/>}
+                        label="Pickup"
+                        name={r.shop}
+                        address={r.pickup}
+                        phone={r.shopPhone}
+                      />
+                    )}
                     <PartyRow
                       icon={<User className="size-3.5"/>}
                       label="Drop"

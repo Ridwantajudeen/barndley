@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
 import { studentNav } from "@/components/StudentNav";
-import { cart, useCart, cartTotal } from "@/lib/cart-store";
+import { cart, useCart, cartTotal, groupByShop, isBundle } from "@/lib/cart-store";
 import { formatNaira } from "@/lib/mock";
-import { MapPin, Wallet, Banknote, Check } from "lucide-react";
+import { MapPin, Wallet, Banknote, Check, Sparkles } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/student/checkout")({
@@ -18,7 +18,10 @@ function CheckoutPage() {
   const [hall, setHall] = useState("Independence Hall");
   const [room, setRoom] = useState("Room 214");
   const [note, setNote] = useState("");
-  const total = cartTotal(snap.lines) + 350 + 100;
+  const groups = groupByShop(snap.lines);
+  const bundle = isBundle(snap.lines);
+  const delivery = snap.lines.length === 0 ? 0 : 350 + Math.max(0, groups.length - 1) * 200;
+  const total = cartTotal(snap.lines) + delivery + 100;
 
   function place() {
     cart.clear();
@@ -27,6 +30,18 @@ function CheckoutPage() {
 
   return (
     <MobileShell nav={studentNav} title="Checkout">
+      {bundle && (
+        <div className="card-soft p-3 flex items-start gap-2 bg-accent-soft border-accent/30 mt-1">
+          <Sparkles className="size-4 text-accent mt-0.5" />
+          <div className="text-xs">
+            <div className="font-semibold">Bundle order · {groups.length} pickups</div>
+            <div className="text-foreground/70 mt-0.5">
+              Rider will collect from {groups.map(g => g.shopName).join(", ")} and deliver together.
+            </div>
+          </div>
+        </div>
+      )}
+
       <Section title="Deliver to">
         <div className="card-soft p-3 flex items-start gap-3">
           <MapPin className="size-5 text-primary mt-0.5" />
@@ -59,7 +74,7 @@ function CheckoutPage() {
 
       <div className="card-soft p-4 mt-5 space-y-1.5 text-sm">
         <Row label={`Items (${snap.lines.length})`} value={formatNaira(cartTotal(snap.lines))} />
-        <Row label="Delivery" value={formatNaira(350)} />
+        <Row label={bundle ? `Delivery (${groups.length} pickups)` : "Delivery"} value={formatNaira(delivery)} />
         <Row label="Service fee" value={formatNaira(100)} />
         <div className="pt-2 border-t border-border/60">
           <Row bold label="Total" value={formatNaira(total)} />
