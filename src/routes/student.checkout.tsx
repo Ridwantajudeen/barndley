@@ -74,7 +74,7 @@ function CheckoutPage() {
 
       <div className="card-soft p-4 mt-5 space-y-1.5 text-sm">
         <Row label={`Items (${snap.lines.length})`} value={formatNaira(cartTotal(snap.lines))} />
-        <Row label="Delivery" value={formatNaira(350)} />
+        <Row label={bundle ? `Delivery (${groups.length} pickups)` : "Delivery"} value={formatNaira(delivery)} />
         <Row label="Service fee" value={formatNaira(100)} />
         <div className="pt-2 border-t border-border/60">
           <Row bold label="Total" value={formatNaira(total)} />
