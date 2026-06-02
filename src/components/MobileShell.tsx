@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Logo } from "./Logo";
+import { NotificationBell } from "./NotificationBell";
 
 export type NavItem = { to: string; label: string; icon: ReactNode };
 
@@ -20,9 +21,12 @@ export function MobileShell({
     <div className="min-h-screen flex justify-center">
       <div className="w-full max-w-[480px] flex flex-col min-h-screen relative">
         <header className="sticky top-0 z-30 px-5 pt-5 pb-3 backdrop-blur-md bg-background/60 border-b border-border/50">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <Logo to="/" />
-            {rightSlot}
+            <div className="flex items-center gap-2">
+              {rightSlot}
+              <NotificationBell />
+            </div>
           </div>
           {title && (
             <h1 className="font-display text-[1.7rem] mt-3 leading-tight">
@@ -30,6 +34,7 @@ export function MobileShell({
             </h1>
           )}
         </header>
+
 
         <main className="flex-1 px-5 pt-4 pb-28">{children}</main>
 
