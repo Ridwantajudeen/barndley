@@ -130,3 +130,5 @@ export function groupByShop(lines: CartLine[]) {
 
 export const isBundle = (lines: CartLine[]) =>
   new Set(lines.map((l) => l.shopId)).size > 1;
+
+export const cartArea = (lines: CartLine[]) => lines[0]?.shopArea ?? null;
