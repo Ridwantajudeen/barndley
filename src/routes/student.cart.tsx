@@ -241,7 +241,7 @@ function CrossShopSearch({ onClose }: { onClose: () => void }) {
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm truncate">{product.name}</div>
                     <div className="text-[0.7rem] text-foreground/60 flex items-center gap-1 truncate">
-                      <Store className="size-3 shrink-0"/> {shop.name} · {shop.distanceKm} km
+                      <Store className="size-3 shrink-0"/> {shop.name} · {shop.area} · {shop.distanceKm} km
                     </div>
                   </div>
                   <div className="text-xs text-foreground/70 shrink-0">
