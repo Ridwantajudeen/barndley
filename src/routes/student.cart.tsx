@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
 import { studentNav } from "@/components/StudentNav";
-import { cart, useCart, cartTotal, groupByShop, isBundle } from "@/lib/cart-store";
+import { cart, useCart, cartTotal, groupByShop, isBundle, cartArea } from "@/lib/cart-store";
 import { shops, formatNaira, type Product, type Measurement, type Shop } from "@/lib/mock";
-import { Minus, Plus, Trash2, ArrowLeft, Search, X, Sparkles, Store } from "lucide-react";
+import { Minus, Plus, Trash2, ArrowLeft, Search, X, Sparkles, Store, MapPin } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/student/cart")({
