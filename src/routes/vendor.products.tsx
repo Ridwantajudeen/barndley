@@ -6,7 +6,7 @@ import { catalog } from "@/lib/catalog";
 import { SearchSelect } from "@/components/SearchSelect";
 import { EmojiPicker } from "@/components/EmojiPicker";
 import { useState, useMemo } from "react";
-import { Plus, X, Trash2 } from "lucide-react";
+import { Plus, X, Trash2, Camera, Image as ImageIcon } from "lucide-react";
 
 export const Route = createFileRoute("/vendor/products")({
   head: () => ({ meta: [{ title: "Products — Vendor" }] }),
@@ -93,6 +93,19 @@ function ProductSheet({
   const [measurements, setMeasurements] = useState<{id:string;label:string;price:number}[]>(
     product?.measurements ?? [{ id: "m1", label: "", price: 0 }],
   );
+  const [photos, setPhotos] = useState<string[]>(product?.photos ?? []);
+
+  function onFiles(files: FileList | null) {
+    if (!files) return;
+    Array.from(files).slice(0, 6 - photos.length).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const url = String(reader.result || "");
+        if (url) setPhotos((prev) => (prev.length >= 6 ? prev : [...prev, url]));
+      };
+      reader.readAsDataURL(file);
+    });
+  }
 
   const categoryOptions = ["Other", ...catalog.map((c) => c.name)];
   const activeCat = catalog.find((c) => c.name === category);
