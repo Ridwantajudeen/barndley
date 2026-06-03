@@ -1,3 +1,13 @@
+import riceImg from "@/assets/products/rice.jpg";
+import beansImg from "@/assets/products/beans.jpg";
+import garriImg from "@/assets/products/garri.jpg";
+import pepperImg from "@/assets/products/pepper.jpg";
+import indomieImg from "@/assets/products/indomie.jpg";
+import eggsImg from "@/assets/products/eggs.jpg";
+import yamImg from "@/assets/products/yam.jpg";
+import uguImg from "@/assets/products/ugu.jpg";
+import chickenImg from "@/assets/products/chicken.jpg";
+
 export type Measurement = { id: string; label: string; price: number };
 export type Product = {
   id: string;
