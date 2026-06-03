@@ -197,6 +197,40 @@ function ProductSheet({
             </div>
           </div>
           <textarea value={description} onChange={(e)=>setDescription(e.target.value)} placeholder="Short description (optional)" rows={2} className="w-full p-3 rounded-xl bg-card border border-border text-sm"/>
+
+          <div>
+            <label className="text-[0.7rem] font-semibold text-foreground/60 ml-1">PHOTOS</label>
+            <p className="text-[0.7rem] text-foreground/50 mt-1 mb-2">
+              Add up to 6 photos. Buyers will see these when choosing a measurement.
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {photos.map((src, i) => (
+                <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-border bg-card">
+                  <img src={src} alt={`Photo ${i+1}`} className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setPhotos((p) => p.filter((_, idx) => idx !== i))}
+                    className="absolute top-1 right-1 h-6 w-6 rounded-full bg-foreground/70 text-background flex items-center justify-center"
+                  >
+                    <X className="size-3.5"/>
+                  </button>
+                </div>
+              ))}
+              {photos.length < 6 && (
+                <label className="aspect-square rounded-xl border border-dashed border-border bg-card flex flex-col items-center justify-center gap-1 cursor-pointer text-foreground/60 hover:bg-secondary">
+                  <Camera className="size-5"/>
+                  <span className="text-[0.65rem] font-semibold">Add photo</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => { onFiles(e.target.files); e.target.value = ""; }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="mt-5">
@@ -243,6 +277,7 @@ function ProductSheet({
             description,
             available: true,
             measurements: measurements.filter(m=>m.label && m.price>0),
+            photos,
           })}
           className="mt-6 w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
         >
