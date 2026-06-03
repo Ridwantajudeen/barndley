@@ -63,6 +63,7 @@ export const shops: Shop[] = [
           { id: "m3", label: "1 milk cup", price: 650 },
           { id: "m4", label: "Small bowl", price: 1200 },
         ],
+        photos: [riceImg],
       },
       {
         id: "beans",
@@ -76,6 +77,7 @@ export const shops: Shop[] = [
           { id: "m2", label: "1 derica", price: 2200 },
           { id: "m3", label: "Half paint", price: 5200 },
         ],
+        photos: [beansImg],
       },
       {
         id: "garri",
@@ -88,6 +90,7 @@ export const shops: Shop[] = [
           { id: "m1", label: "1 cup", price: 350 },
           { id: "m2", label: "Big bowl", price: 1500 },
         ],
+        photos: [garriImg],
       },
       {
         id: "pepper",
@@ -101,6 +104,7 @@ export const shops: Shop[] = [
           { id: "m2", label: "Small bowl", price: 1800 },
           { id: "m3", label: "Blended (sachet)", price: 700 },
         ],
+        photos: [pepperImg],
       },
     ],
   },
@@ -130,6 +134,7 @@ export const shops: Shop[] = [
           { id: "m2", label: "Pack of 5", price: 2100 },
           { id: "m3", label: "Carton (40)", price: 16500 },
         ],
+        photos: [indomieImg],
       },
       {
         id: "egg",
@@ -143,6 +148,7 @@ export const shops: Shop[] = [
           { id: "m2", label: "Half crate", price: 3100 },
           { id: "m3", label: "Full crate", price: 6000 },
         ],
+        photos: [eggsImg],
       },
       {
         id: "milo",
@@ -180,6 +186,7 @@ export const shops: Shop[] = [
           { id: "m1", label: "Per tuber", price: 4500 },
           { id: "m2", label: "Half tuber", price: 2400 },
         ],
+        photos: [yamImg],
       },
       {
         id: "ugu",
@@ -192,6 +199,7 @@ export const shops: Shop[] = [
           { id: "m1", label: "Per bunch", price: 700 },
           { id: "m2", label: "Per bag", price: 2500 },
         ],
+        photos: [uguImg],
       },
       {
         id: "chicken",
@@ -205,6 +213,7 @@ export const shops: Shop[] = [
           { id: "m2", label: "Half kg", price: 2700 },
           { id: "m3", label: "Per piece", price: 1500 },
         ],
+        photos: [chickenImg],
       },
     ],
   },
