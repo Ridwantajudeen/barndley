@@ -7,6 +7,7 @@ export type Product = {
   description: string;
   available: boolean;
   measurements: Measurement[];
+  photos?: string[];
 };
 export type Shop = {
   id: string;
