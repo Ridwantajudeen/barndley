@@ -175,7 +175,13 @@ function RiderHome() {
                     />
                   </div>
 
-                  <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => setDetails(r)}
+                    className="mt-3 w-full py-2.5 rounded-xl bg-secondary font-semibold text-sm inline-flex items-center justify-center gap-1.5"
+                  >
+                    <Eye className="size-4"/> View order details
+                  </button>
+                  <div className="mt-2 flex gap-2">
                     <button onClick={() => setActive(r)} className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm">Accept</button>
                     <button className="flex-1 py-2.5 rounded-xl bg-secondary font-semibold text-sm">Skip</button>
                   </div>
@@ -184,6 +190,14 @@ function RiderHome() {
             </div>
           )}
         </>
+      )}
+
+      {details && (
+        <RequestDetailsModal
+          req={details}
+          onClose={() => setDetails(null)}
+          onAccept={() => { setActive(details); setDetails(null); }}
+        />
       )}
     </MobileShell>
   );
