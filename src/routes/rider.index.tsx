@@ -3,7 +3,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { riderNav } from "@/components/RiderNav";
 import { riderRequests, formatNaira, orderStages } from "@/lib/mock";
 import { useState } from "react";
-import { Bike, MapPin, Navigation, Check, Phone, MessageCircle, Store, User, Sparkles } from "lucide-react";
+import { Bike, MapPin, Navigation, Check, Phone, MessageCircle, Store, User, Sparkles, Eye, X, Package, Clock, Wallet } from "lucide-react";
 
 export const Route = createFileRoute("/rider/")({
   head: () => ({ meta: [{ title: "Rider — Campus Basket" }] }),
@@ -14,6 +14,7 @@ function RiderHome() {
   const [online, setOnline] = useState(true);
   const [active, setActive] = useState<typeof riderRequests[number] | null>(null);
   const [stage, setStage] = useState(2);
+  const [details, setDetails] = useState<typeof riderRequests[number] | null>(null);
 
   return (
     <MobileShell nav={riderNav} title={online ? "You're online" : "You're offline"}>
@@ -174,7 +175,13 @@ function RiderHome() {
                     />
                   </div>
 
-                  <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => setDetails(r)}
+                    className="mt-3 w-full py-2.5 rounded-xl bg-secondary font-semibold text-sm inline-flex items-center justify-center gap-1.5"
+                  >
+                    <Eye className="size-4"/> View order details
+                  </button>
+                  <div className="mt-2 flex gap-2">
                     <button onClick={() => setActive(r)} className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm">Accept</button>
                     <button className="flex-1 py-2.5 rounded-xl bg-secondary font-semibold text-sm">Skip</button>
                   </div>
@@ -183,6 +190,14 @@ function RiderHome() {
             </div>
           )}
         </>
+      )}
+
+      {details && (
+        <RequestDetailsModal
+          req={details}
+          onClose={() => setDetails(null)}
+          onAccept={() => { setActive(details); setDetails(null); }}
+        />
       )}
     </MobileShell>
   );
@@ -235,6 +250,140 @@ function Mini({ label, value }: { label: string; value: string }) {
     <div className="card-soft p-3">
       <div className="text-[0.68rem] text-foreground/60">{label}</div>
       <div className="font-display text-lg">{value}</div>
+    </div>
+  );
+}
+
+function RequestDetailsModal({
+  req, onClose, onAccept,
+}: { req: typeof riderRequests[number]; onClose: () => void; onAccept: () => void }) {
+  // Group line items by shop for bundle orders
+  const groups = req.bundle
+    ? req.lineItems.reduce<Record<string, typeof req.lineItems>>((acc, li) => {
+        const key = li.shop || "Other";
+        (acc[key] = acc[key] || []).push(li);
+        return acc;
+      }, {})
+    : { [req.shop]: req.lineItems };
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" />
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative bg-background w-full max-w-[480px] rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[88vh] flex flex-col"
+      >
+        <div className="px-5 pt-5 pb-3 flex items-start justify-between border-b border-border/60">
+          <div>
+            <div className="text-[0.65rem] uppercase tracking-wide text-foreground/60 font-semibold">
+              {req.bundle ? "Bundle request" : "Request"} · {req.id}
+            </div>
+            <div className="font-display text-xl leading-tight mt-0.5">{req.shop}</div>
+            <div className="text-xs text-foreground/60 flex items-center gap-1 mt-1">
+              <Clock className="size-3" /> {req.placedAt} · {req.distanceKm} km
+            </div>
+          </div>
+          <button onClick={onClose} aria-label="Close" className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center">
+            <X className="size-4"/>
+          </button>
+        </div>
+
+        <div className="overflow-y-auto px-5 py-4 space-y-5">
+          <section className="grid grid-cols-3 gap-2">
+            <Stat label="Payout" value={formatNaira(req.payout)} accent />
+            <Stat label="Items" value={String(req.items)} />
+            <Stat label="Distance" value={`${req.distanceKm} km`} />
+          </section>
+
+          <section>
+            <div className="text-[0.65rem] uppercase tracking-wide text-foreground/60 font-semibold mb-2">Buyer</div>
+            <div className="flex items-center gap-3 bg-secondary/60 rounded-2xl p-3">
+              <span className="h-10 w-10 rounded-xl bg-foreground text-background flex items-center justify-center">
+                <User className="size-4"/>
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold">{req.student}</div>
+                <div className="text-[0.7rem] text-foreground/60 flex items-center gap-1">
+                  <MapPin className="size-3"/> {req.drop}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div className="text-[0.65rem] uppercase tracking-wide text-foreground/60 font-semibold mb-2">
+              What the buyer ordered
+            </div>
+            <div className="space-y-3">
+              {Object.entries(groups).map(([shopName, lines]) => (
+                <div key={shopName} className="bg-card border border-border rounded-2xl overflow-hidden">
+                  {req.bundle && (
+                    <div className="px-3 py-2 bg-secondary/60 text-[0.7rem] font-semibold flex items-center gap-1.5">
+                      <Store className="size-3.5"/> {shopName}
+                    </div>
+                  )}
+                  <ul className="divide-y divide-border/60">
+                    {lines.map((li, i) => (
+                      <li key={i} className="px-3 py-3 flex items-center gap-3">
+                        <span className="h-9 w-9 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                          <Package className="size-4"/>
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">{li.name}</div>
+                          <div className="text-[0.7rem] text-foreground/60">{li.qty} × {li.unit}</div>
+                        </div>
+                        <div className="text-sm font-display">{formatNaira(li.price * li.qty)}</div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            {req.buyerNote && (
+              <div className="mt-2 text-xs text-foreground/70 bg-accent-soft/50 border border-accent/30 rounded-xl px-3 py-2">
+                <span className="font-semibold">Note: </span>{req.buyerNote}
+              </div>
+            )}
+          </section>
+
+          <section className="space-y-1.5 text-sm">
+            <Row label="Subtotal" value={formatNaira(req.subtotal)} />
+            <Row label="Delivery" value={formatNaira(req.deliveryFee)} />
+            <div className="border-t border-border pt-2 mt-2 flex items-center justify-between">
+              <span className="font-semibold">Buyer paid</span>
+              <span className="font-display text-lg">{formatNaira(req.total)}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[0.7rem] text-foreground/60 pt-1">
+              <Wallet className="size-3"/> {req.paymentMethod}
+            </div>
+          </section>
+        </div>
+
+        <div className="px-5 py-3 border-t border-border/60 flex gap-2">
+          <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-secondary font-semibold text-sm">Skip</button>
+          <button onClick={onAccept} className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm">
+            Accept · {formatNaira(req.payout)}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div className={"rounded-xl p-3 " + (accent ? "bg-primary text-primary-foreground" : "bg-secondary")}>
+      <div className={"text-[0.65rem] " + (accent ? "text-primary-foreground/80" : "text-foreground/60")}>{label}</div>
+      <div className="font-display text-lg leading-tight">{value}</div>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-foreground/60">{label}</span>
+      <span>{value}</span>
     </div>
   );
 }

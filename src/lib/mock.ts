@@ -367,6 +367,14 @@ export const sampleOrders = [
   },
 ];
 
+export type RiderOrderLine = {
+  name: string;
+  qty: number;
+  unit: string;
+  price: number;
+  shop?: string;
+};
+
 export type RiderRequest = {
   id: string;
   shop: string;
@@ -380,6 +388,13 @@ export type RiderRequest = {
   items: number;
   bundle?: boolean;
   pickups?: { shop: string; phone: string; address: string; items: number }[];
+  lineItems: RiderOrderLine[];
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+  paymentMethod: string;
+  buyerNote?: string;
+  placedAt: string;
 };
 
 export const riderRequests: RiderRequest[] = [
@@ -394,6 +409,17 @@ export const riderRequests: RiderRequest[] = [
     distanceKm: 1.2,
     payout: 850,
     items: 4,
+    placedAt: "Today, 7:18 AM",
+    paymentMethod: "Wallet · Paid",
+    buyerNote: "Please knock — door bell isn't working.",
+    lineItems: [
+      { name: "Foreign rice", qty: 2, unit: "cup", price: 1200 },
+      { name: "Tomato", qty: 1, unit: "small basket", price: 2500 },
+      { name: "Vegetable oil", qty: 1, unit: "75cl", price: 1800 },
+    ],
+    subtotal: 6500,
+    deliveryFee: 400,
+    total: 6900,
   },
   {
     id: "REQ-773",
@@ -407,11 +433,25 @@ export const riderRequests: RiderRequest[] = [
     payout: 1450,
     items: 6,
     bundle: true,
+    placedAt: "Today, 7:02 AM",
+    paymentMethod: "Card · Paid",
+    buyerNote: "Combine all into one drop at Mellanby Rm 7.",
     pickups: [
       { shop: "Mama Tee's Foodstuff", phone: "+234 802 990 1245", address: "Block 4, North Gate Market", items: 2 },
       { shop: "Brother K Provisions", phone: "+234 803 220 1188", address: "Stall 9, Campus Gate", items: 3 },
       { shop: "Iya Bunmi Vegetables", phone: "+234 803 117 6620", address: "Stall 12, South Market", items: 1 },
     ],
+    lineItems: [
+      { shop: "Mama Tee's Foodstuff", name: "Foreign rice", qty: 1, unit: "cup", price: 1200 },
+      { shop: "Mama Tee's Foodstuff", name: "Beans", qty: 1, unit: "cup", price: 1000 },
+      { shop: "Brother K Provisions", name: "Indomie", qty: 1, unit: "carton", price: 6500 },
+      { shop: "Brother K Provisions", name: "Eggs", qty: 1, unit: "crate", price: 3800 },
+      { shop: "Brother K Provisions", name: "Sachet milk", qty: 1, unit: "pack", price: 900 },
+      { shop: "Iya Bunmi Vegetables", name: "Ugu leaves", qty: 1, unit: "bundle", price: 600 },
+    ],
+    subtotal: 14000,
+    deliveryFee: 1450,
+    total: 15450,
   },
   {
     id: "REQ-772",
@@ -424,6 +464,15 @@ export const riderRequests: RiderRequest[] = [
     distanceKm: 0.9,
     payout: 700,
     items: 2,
+    placedAt: "Today, 6:48 AM",
+    paymentMethod: "Wallet · Paid",
+    lineItems: [
+      { name: "Fresh pepper", qty: 1, unit: "bowl", price: 900 },
+      { name: "Yam tuber", qty: 1, unit: "medium", price: 2200 },
+    ],
+    subtotal: 3100,
+    deliveryFee: 350,
+    total: 3450,
   },
 ];
 
