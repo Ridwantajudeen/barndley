@@ -4,7 +4,6 @@ import { riderNav } from "@/components/RiderNav";
 import { riderRequests, formatNaira, orderStages } from "@/lib/mock";
 import { useState } from "react";
 import { Bike, MapPin, Navigation, Check, Phone, MessageCircle, Store, User, Sparkles, Eye, X, Package, Clock, Wallet } from "lucide-react";
-import { formatNaira as _formatNairaUnused } from "@/lib/mock";
 
 export const Route = createFileRoute("/rider/")({
   head: () => ({ meta: [{ title: "Rider — Campus Basket" }] }),
