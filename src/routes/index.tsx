@@ -65,7 +65,7 @@ function Landing() {
           </div>
         </header>
 
-        <section className="mt-10 sm:mt-16 grid sm:grid-cols-[1.2fr_1fr] gap-10 items-center">
+        <section className="mt-4 sm:mt-6 grid sm:grid-cols-[1.2fr_1fr] gap-10 items-center">
           <div>
             <span className="chip">
               <Sparkles className="size-3.5" /> hyperlocal student marketplace
