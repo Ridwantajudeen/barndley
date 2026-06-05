@@ -46,7 +46,7 @@ function Landing() {
     <div className="min-h-screen flex justify-center">
       <div className="w-full max-w-[1100px] px-5 sm:px-10 py-6 sm:py-10">
         <header className="flex items-center justify-between">
-          <Logo className="h-16 sm:h-20" />
+          <Logo className="h-14 sm:h-16" />
           <div className="flex items-center gap-3">
             <Link
               to="/auth"
