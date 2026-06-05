@@ -5,7 +5,7 @@ import { ArrowRight, Bike, Store, GraduationCap, MapPin, Sparkles } from "lucide
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "gomarkket — Foodstuff delivered to your hostel, fast." },
+      { title: "guorrow — Foodstuff delivered to your hostel, fast." },
       {
         name: "description",
         content:
@@ -79,7 +79,7 @@ function Landing() {
               , fast.
             </h1>
             <p className="mt-4 text-foreground/70 text-[1.02rem] max-w-[44ch]">
-              From a milk-cup of rice to a full paint of beans — order from
+              From a milk-cup of rice to a full paint of beans - order from
               nearby shops by the measure that makes sense to you. Your
               campus rider does the rest.
             </p>
@@ -114,9 +114,9 @@ function Landing() {
                 <MapPin className="size-3.5" /> Campus-only delivery
               </span>
               <span>•</span>
-              <span>One shop per cart</span>
+              <span>Multi-shop per cart</span>
               <span>•</span>
-              <span>Cash or wallet</span>
+              <span>Fast Payments</span>
             </div>
           </div>
 
@@ -159,7 +159,7 @@ function Landing() {
         </section>
 
         <footer className="mt-16 text-center text-xs text-foreground/50">
-          © gomarkket — built for Nigerian campuses.
+          © guorrow — built for Nigerian campuses.
         </footer>
       </div>
     </div>
