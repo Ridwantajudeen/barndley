@@ -3,7 +3,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { vendorNav } from "@/components/VendorNav";
 import { formatNaira } from "@/lib/mock";
 import { useEffect, useState } from "react";
-import { Bell, CircleDollarSign, ShoppingBag, Star, TrendingUp, Link2, Check } from "lucide-react";
+import { CircleDollarSign, ShoppingBag, Star, TrendingUp, Link2, Check } from "lucide-react";
 
 export const Route = createFileRoute("/vendor/")({
   head: () => ({ meta: [{ title: "Shop dashboard — Campus Basket" }] }),
