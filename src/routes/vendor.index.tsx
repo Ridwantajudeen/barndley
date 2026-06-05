@@ -40,7 +40,7 @@ function VendorHome() {
   return (
     <MobileShell
       nav={vendorNav}
-      title="Mama Tee's Foodstuff"
+      title="Mama Osas Foodstuff"
       rightSlot={
         <button className="relative h-9 w-9 rounded-full bg-secondary flex items-center justify-center">
           <Bell className="size-4"/>

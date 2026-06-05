@@ -23,7 +23,7 @@ function initials(name: string) {
 
 function VendorProfile() {
   const [profile, setProfile] = useProfile("cb.vendor.profile", {
-    name: "Mama Tee's Foodstuff",
+    name: "Mama Osas Foodstuff",
     location: "Block 4, North Gate Market",
     hours: "7:00 — 21:00",
     phone: "+234 802 990 1245",

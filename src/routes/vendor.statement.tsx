@@ -34,7 +34,7 @@ function VendorStatement() {
     <MobileShell nav={vendorNav} title="Statement">
       <StatementView
         backTo="/vendor/profile"
-        ownerLabel="Mama Tee's Foodstuff"
+        ownerLabel="Mama Osas Foodstuff"
         accountType="Shop wallet"
         entries={entries}
       />

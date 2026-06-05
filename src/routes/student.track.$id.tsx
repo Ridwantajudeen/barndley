@@ -60,12 +60,12 @@ function TrackPage() {
 
         <ContactRow
           avatar="🥬"
-          name="Mama Tee's Foodstuff"
+          name="Mama Osas Foodstuff"
           sub="Open · ⭐ 4.8 (312)"
           location="Block 4, North Gate Market"
           phone="+234 802 990 1245"
-          onChat={() => setChatWith({ name: "Mama Tee's Foodstuff", avatar: "🥬" })}
-          onCall={(p) => setCallWith({ name: "Mama Tee's Foodstuff", avatar: "🥬", phone: p })}
+          onChat={() => setChatWith({ name: "Mama Osas Foodstuff", avatar: "🥬" })}
+          onCall={(p) => setCallWith({ name: "Mama Osas Foodstuff", avatar: "🥬", phone: p })}
         />
 
         <ContactRow

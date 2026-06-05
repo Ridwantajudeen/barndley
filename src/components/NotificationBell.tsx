@@ -14,7 +14,7 @@ const NOTIFS: Notif[] = [
   {
     id: "n1",
     title: "Bundle order on the way",
-    body: "Your rider Tunde just picked up from Mama Tee's. 2 stops left in your Ekosodin bundle.",
+    body: "Your rider Tunde just picked up from Mama Osas. 2 stops left in your Ekosodin bundle.",
     time: "2 min ago",
     icon: <Sparkles className="size-4 text-accent" />,
     unread: true,

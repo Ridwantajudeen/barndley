@@ -13,7 +13,7 @@ export type StatementEntry = {
 
 export type StatementProps = {
   backTo: string;
-  ownerLabel: string; // e.g. "Tunde Adebayo" or "Mama Tee's Foodstuff"
+  ownerLabel: string; // e.g. "Tunde Adebayo" or "Mama Osas Foodstuff"
   accountType: "Rider wallet" | "Shop wallet";
   entries: StatementEntry[];
 };

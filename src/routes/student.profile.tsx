@@ -11,7 +11,7 @@ export const Route = createFileRoute("/student/profile")({
 });
 
 const tx = [
-  { id: "t1", label: "Order CB-1042 · Mama Tee's", amount: -6900, when: "Today, 13:24", kind: "out" as const },
+  { id: "t1", label: "Order CB-1042 · Mama Osas", amount: -6900, when: "Today, 13:24", kind: "out" as const },
   { id: "t2", label: "Wallet top-up", amount: 10000, when: "Today, 12:50", kind: "in" as const },
   { id: "t3", label: "Order CB-1031 · Iya Bunmi", amount: -3200, when: "Yesterday", kind: "out" as const },
   { id: "t4", label: "Referral bonus", amount: 500, when: "Mon", kind: "in" as const },

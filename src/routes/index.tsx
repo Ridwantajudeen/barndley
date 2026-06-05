@@ -125,7 +125,7 @@ function Landing() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xs text-foreground/60">Your basket</div>
-                  <div className="font-display text-xl">Mama Tee's</div>
+                  <div className="font-display text-xl">Mama Osas</div>
                 </div>
                 <span className="chip-accent chip">18 min</span>
               </div>

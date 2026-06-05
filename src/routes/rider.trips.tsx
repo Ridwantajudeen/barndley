@@ -5,7 +5,7 @@ import { formatNaira } from "@/lib/mock";
 import { Sparkles } from "lucide-react";
 
 const trips = [
-  { id: "TR-218", shop: "Mama Tee's", drop: "Indep. Hall", payout: 850, when: "Today, 13:24", status: "Active", bundle: false },
+  { id: "TR-218", shop: "Mama Osas", drop: "Indep. Hall", payout: 850, when: "Today, 13:24", status: "Active", bundle: false },
   { id: "TR-219", shop: "Bundle · 3 shops", drop: "Mellanby Hall", payout: 1450, when: "Today, 12:10", status: "Done", bundle: true },
   { id: "TR-217", shop: "Iya Bunmi", drop: "Queens Hall", payout: 700, when: "Today, 11:02", status: "Done", bundle: false },
   { id: "TR-216", shop: "Brother K", drop: "Mellanby", payout: 600, when: "Today, 09:45", status: "Done", bundle: false },
