@@ -68,7 +68,7 @@ function Landing() {
         <section className="mt-10 sm:mt-16 grid sm:grid-cols-[1.2fr_1fr] gap-10 items-center">
           <div>
             <span className="chip">
-              <Sparkles className="size-3.5" /> hyperlocal campus marketplace
+              <Sparkles className="size-3.5" /> hyperlocal student marketplace
             </span>
             <h1 className="font-display text-[2.4rem] sm:text-[3.4rem] leading-[1.02] mt-4">
               Foodstuff at your{" "}
@@ -159,7 +159,7 @@ function Landing() {
         </section>
 
         <footer className="mt-16 text-center text-xs text-foreground/50">
-          © guorrow — built for Nigerian campuses.
+          © guorrow — built for Nigerian Students.
         </footer>
       </div>
     </div>
