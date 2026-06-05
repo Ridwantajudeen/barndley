@@ -1,7 +1,10 @@
-import { createFileRoute, useNavigate, useSearch, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { Logo } from "@/components/Logo";
-import { Bike, GraduationCap, Store, Mail, Lock, User } from "lucide-react";
+import { Bike, GraduationCap, Store, Mail, Lock, User, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
+import { toast } from "sonner";
 
 type Role = "student" | "vendor" | "rider";
 
@@ -19,13 +22,104 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+async function routeForUser(userId: string, fallback: Role): Promise<Role> {
+  const { data } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const role = (data?.role as Role | undefined) ?? fallback;
+  return role;
+}
+
 function AuthPage() {
   const { mode: initialMode, role: initialRole } = useSearch({ from: "/auth" });
   const navigate = useNavigate();
   const [mode, setMode] = useState<"signin" | "signup">(initialMode);
   const [role, setRole] = useState<Role>(initialRole);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const enter = (r: Role) => navigate({ to: `/${r}` });
+  // If already signed-in, route straight to dashboard
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (cancelled || !data.session) return;
+      const r = await routeForUser(data.session.user.id, role);
+      navigate({ to: `/${r}` });
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      toast.error("Enter your email and password");
+      return;
+    }
+    setLoading(true);
+    try {
+      if (mode === "signup") {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/${role}`,
+            data: {
+              display_name: name || email.split("@")[0],
+              role,
+            },
+          },
+        });
+        if (error) throw error;
+        if (data.session) {
+          toast.success("Welcome to Guorrow!");
+          navigate({ to: `/${role}` });
+        } else {
+          toast.success("Account created. Check your email to confirm.");
+          setMode("signin");
+        }
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        const r = await routeForUser(data.user.id, role);
+        toast.success("Signed in");
+        navigate({ to: `/${r}` });
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogle = async () => {
+    setLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: `${window.location.origin}/auth`,
+        extraParams: { prompt: "select_account" },
+      });
+      if (result.error) throw result.error;
+      if (result.redirected) return;
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        const r = await routeForUser(data.user.id, role);
+        navigate({ to: `/${r}` });
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Google sign-in failed";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex justify-center bg-background">
@@ -39,74 +133,92 @@ function AuthPage() {
             {mode === "signup" ? "Create your account" : "Welcome back"}
           </h1>
           <p className="text-sm text-foreground/60 text-center mt-1">
-            Demo mode — pick a role and jump in. No password needed.
+            {mode === "signup"
+              ? "Pick how you'll use Guorrow, then sign up."
+              : "Sign in to continue."}
           </p>
 
-          <div className="mt-5 grid grid-cols-3 gap-2">
-            {ROLES.map((r) => (
-              <button
-                key={r.id}
-                type="button"
-                onClick={() => setRole(r.id)}
-                className={`rounded-xl border p-3 text-left transition ${
-                  role === r.id
-                    ? "border-primary bg-primary-soft"
-                    : "border-border hover:border-foreground/30"
-                }`}
-              >
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-background/70">
-                  {r.icon}
-                </span>
-                <div className="font-semibold text-sm mt-2">{r.label}</div>
-                <div className="text-[11px] text-foreground/60 leading-tight">{r.desc}</div>
-              </button>
-            ))}
-          </div>
+          {mode === "signup" && (
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              {ROLES.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setRole(r.id)}
+                  className={`rounded-xl border p-3 text-left transition ${
+                    role === r.id
+                      ? "border-primary bg-primary-soft"
+                      : "border-border hover:border-foreground/30"
+                  }`}
+                >
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-background/70">
+                    {r.icon}
+                  </span>
+                  <div className="font-semibold text-sm mt-2">{r.label}</div>
+                  <div className="text-[11px] text-foreground/60 leading-tight">{r.desc}</div>
+                </button>
+              ))}
+            </div>
+          )}
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              enter(role);
-            }}
-            className="mt-5 space-y-3"
-          >
+          <form onSubmit={handleSubmit} className="mt-5 space-y-3">
             {mode === "signup" && (
               <Field icon={<User className="size-4" />}>
-                <input placeholder="Your name (optional)" className="w-full bg-transparent outline-none text-sm" />
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your name"
+                  className="w-full bg-transparent outline-none text-sm"
+                />
               </Field>
             )}
             <Field icon={<Mail className="size-4" />}>
-              <input type="email" placeholder="Email (optional)" className="w-full bg-transparent outline-none text-sm" />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email"
+                className="w-full bg-transparent outline-none text-sm"
+              />
             </Field>
             <Field icon={<Lock className="size-4" />}>
-              <input type="password" placeholder="Password (optional)" className="w-full bg-transparent outline-none text-sm" />
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                className="w-full bg-transparent outline-none text-sm"
+              />
             </Field>
 
             <button
               type="submit"
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+              disabled={loading}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
             >
-              {mode === "signup" ? "Create account & continue" : "Sign in"}
+              {loading && <Loader2 className="size-4 animate-spin" />}
+              {mode === "signup" ? "Create account" : "Sign in"}
             </button>
           </form>
 
           <div className="my-4 flex items-center gap-3 text-xs text-foreground/40">
             <div className="h-px flex-1 bg-border" />
-            quick access
+            or
             <div className="h-px flex-1 bg-border" />
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            {ROLES.map((r) => (
-              <Link
-                key={r.id}
-                to={`/${r.id}`}
-                className="rounded-xl border border-border bg-background px-2 py-2 text-center text-xs font-semibold hover:bg-secondary"
-              >
-                {r.label}
-              </Link>
-            ))}
-          </div>
+          <button
+            type="button"
+            onClick={handleGoogle}
+            disabled={loading}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold hover:bg-secondary disabled:opacity-60"
+          >
+            <GoogleIcon />
+            Continue with Google
+          </button>
 
           <div className="mt-5 text-center text-sm text-foreground/70">
             {mode === "signup" ? "Already have an account?" : "New here?"}{" "}
@@ -130,5 +242,16 @@ function Field({ icon, children }: { icon: React.ReactNode; children: React.Reac
       <span className="text-foreground/50">{icon}</span>
       {children}
     </label>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg className="size-4" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.8 32.4 29.3 35.5 24 35.5c-6.4 0-11.5-5.1-11.5-11.5S17.6 12.5 24 12.5c2.9 0 5.6 1.1 7.6 2.9l5.7-5.7C33.8 6.4 29.1 4.5 24 4.5 13.2 4.5 4.5 13.2 4.5 24S13.2 43.5 24 43.5 43.5 34.8 43.5 24c0-1.2-.1-2.4-.4-3.5z"/>
+      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 18.9 12.5 24 12.5c2.9 0 5.6 1.1 7.6 2.9l5.7-5.7C33.8 6.4 29.1 4.5 24 4.5 16.3 4.5 9.7 8.9 6.3 14.7z"/>
+      <path fill="#4CAF50" d="M24 43.5c5 0 9.6-1.9 13.1-5l-6.1-5c-1.9 1.3-4.3 2-7 2-5.3 0-9.7-3.4-11.3-8l-6.5 5C9.5 39 16.2 43.5 24 43.5z"/>
+      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.1 5c-.4.4 6.6-4.8 6.6-14.5 0-1.2-.1-2.4-.4-3.5z"/>
+    </svg>
   );
 }
