@@ -9,11 +9,10 @@
   ],
   "routes": [
     {
-      "src": "^/(.*\\.(js|css|png|jpg|jpeg|svg|ico|json|map|txt|woff2|woff|ttf|eot|otf))$",
-      "dest": "/$1"
+      "handle": "filesystem"
     },
     {
-      "src": "^/(.*)$",
+      "src": "/.*",
       "dest": "/index.html"
     }
   ]
