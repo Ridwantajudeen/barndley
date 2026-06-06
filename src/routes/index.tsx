@@ -34,7 +34,7 @@ const roles = [
   },
   {
     id: "rider" as const,
-    title: "I ride a Bicycle",
+    title: "I ride a Bike",
     desc: "Pick up, deliver, earn. Toggle online and go.",
     icon: <Bike className="size-5" />,
     accent: "bg-secondary",
@@ -114,7 +114,7 @@ function Landing() {
                 <MapPin className="size-3.5" /> Campus-only delivery
               </span>
               <span>•</span>
-              <span>Multi-shop per cart</span>
+              <span>Multi-shop Experience</span>
               <span>•</span>
               <span>Bulk Shopping</span>
             </div>
