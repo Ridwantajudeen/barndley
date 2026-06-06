@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/Logo";
 import { Bike, GraduationCap, Store, Mail, Lock, User, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,14 +22,10 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-async function routeForUser(userId: string, fallback: Role): Promise<Role> {
-  const { data } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .maybeSingle();
-  const role = (data?.role as Role | undefined) ?? fallback;
-  return role;
+async function ensureRoleAndRoute(role: Role, navigate: ReturnType<typeof useNavigate>) {
+  // Add the selected role to this account (no-op if already present)
+  await supabase.rpc("add_user_role", { _role: role });
+  navigate({ to: `/${role}`, replace: true });
 }
 
 function AuthPage() {
@@ -41,20 +37,31 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const roleRef = useRef<Role>(initialRole);
+  roleRef.current = role;
 
-  // If already signed-in, route straight to dashboard
+  // If already signed-in, route straight to dashboard with the chosen role.
+  // Also handle the post-Google redirect via onAuthStateChange.
   useEffect(() => {
     let cancelled = false;
-    supabase.auth.getSession().then(async ({ data }) => {
+
+    supabase.auth.getSession().then(({ data }) => {
       if (cancelled || !data.session) return;
-      const r = await routeForUser(data.session.user.id, role);
-      navigate({ to: `/${r}` });
+      ensureRoleAndRoute(roleRef.current, navigate);
     });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        // defer to avoid running supabase calls inside the callback
+        setTimeout(() => ensureRoleAndRoute(roleRef.current, navigate), 0);
+      }
+    });
+
     return () => {
       cancelled = true;
+      sub.subscription.unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +76,7 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/${role}`,
+            emailRedirectTo: `${window.location.origin}/auth`,
             data: {
               display_name: name || email.split("@")[0],
               role,
@@ -79,17 +86,16 @@ function AuthPage() {
         if (error) throw error;
         if (data.session) {
           toast.success("Welcome to Guorrow!");
-          navigate({ to: `/${role}` });
+          await ensureRoleAndRoute(role, navigate);
         } else {
           toast.success("Account created. Check your email to confirm.");
           setMode("signin");
         }
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        const r = await routeForUser(data.user.id, role);
         toast.success("Signed in");
-        navigate({ to: `/${r}` });
+        await ensureRoleAndRoute(role, navigate);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
@@ -108,15 +114,10 @@ function AuthPage() {
       });
       if (result.error) throw result.error;
       if (result.redirected) return;
-      const { data } = await supabase.auth.getUser();
-      if (data.user) {
-        const r = await routeForUser(data.user.id, role);
-        navigate({ to: `/${r}` });
-      }
+      // onAuthStateChange will pick this up; nothing else to do.
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Google sign-in failed";
       toast.error(msg);
-    } finally {
       setLoading(false);
     }
   };
@@ -135,31 +136,29 @@ function AuthPage() {
           <p className="text-sm text-foreground/60 text-center mt-1">
             {mode === "signup"
               ? "Pick how you'll use Guorrow, then sign up."
-              : "Sign in to continue."}
+              : "Choose how you want to continue."}
           </p>
 
-          {mode === "signup" && (
-            <div className="mt-5 grid grid-cols-3 gap-2">
-              {ROLES.map((r) => (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => setRole(r.id)}
-                  className={`rounded-xl border p-3 text-left transition ${
-                    role === r.id
-                      ? "border-primary bg-primary-soft"
-                      : "border-border hover:border-foreground/30"
-                  }`}
-                >
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-background/70">
-                    {r.icon}
-                  </span>
-                  <div className="font-semibold text-sm mt-2">{r.label}</div>
-                  <div className="text-[11px] text-foreground/60 leading-tight">{r.desc}</div>
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="mt-5 grid grid-cols-3 gap-2">
+            {ROLES.map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => setRole(r.id)}
+                className={`rounded-xl border p-3 text-left transition ${
+                  role === r.id
+                    ? "border-primary bg-primary-soft"
+                    : "border-border hover:border-foreground/30"
+                }`}
+              >
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-background/70">
+                  {r.icon}
+                </span>
+                <div className="font-semibold text-sm mt-2">{r.label}</div>
+                <div className="text-[11px] text-foreground/60 leading-tight">{r.desc}</div>
+              </button>
+            ))}
+          </div>
 
           <form onSubmit={handleSubmit} className="mt-5 space-y-3">
             {mode === "signup" && (
