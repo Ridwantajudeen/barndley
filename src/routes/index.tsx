@@ -111,7 +111,7 @@ function Landing() {
 
             <div className="mt-8 flex items-center gap-4 text-xs text-foreground/60">
               <span className="inline-flex items-center gap-1.5">
-                <MapPin className="size-3.5" /> Hostel delivery
+                <MapPin className="size-3.5" /> Hostel Delivery
               </span>
               <span>•</span>
               <span>Multi-shop Experience</span>
