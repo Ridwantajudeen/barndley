@@ -159,7 +159,7 @@ function Landing() {
         </section>
 
         <footer className="mt-16 text-center text-xs text-foreground/50">
-          © guorrow — built for Nigerian Students.
+          © guorrow — built for Nigerian students. Your next market run starts here.
         </footer>
       </div>
     </div>
