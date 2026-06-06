@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
 import { riderNav } from "@/components/RiderNav";
-import { Bike, ChevronRight, Mail, MapPin, Phone, Shield, Star } from "lucide-react";
+import { Bike, ChevronRight, LogOut, Mail, MapPin, Phone, Shield, Star } from "lucide-react";
 import { EditProfileButton, useProfile } from "@/components/EditProfileDialog";
+import { useSignOut } from "@/lib/auth-helpers";
 
 export const Route = createFileRoute("/rider/profile")({
   head: () => ({ meta: [{ title: "Profile — Rider" }] }),
@@ -14,6 +15,7 @@ function initials(name: string) {
 }
 
 function RiderProfile() {
+  const signOut = useSignOut();
   const [profile, setProfile] = useProfile("cb.rider.profile", {
     name: "Tunde Adebayo",
     phone: "+234 803 112 5577",
@@ -53,6 +55,13 @@ function RiderProfile() {
         <Row icon={<Bike className="size-4" />} label="Bicycle" value={profile.bike} />
         <Row icon={<Shield className="size-4" />} label="ID verification" value="Approved" />
       </div>
+
+      <button
+        onClick={signOut}
+        className="mt-4 w-full py-3 rounded-xl bg-secondary text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-secondary/80"
+      >
+        <LogOut className="size-4" /> Sign out
+      </button>
     </MobileShell>
   );
 }
