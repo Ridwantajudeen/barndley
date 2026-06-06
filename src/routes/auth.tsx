@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/Logo";
 import { Bike, GraduationCap, Store, Mail, Lock, User, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 
 type Role = "student" | "vendor" | "rider";
@@ -108,16 +107,18 @@ function AuthPage() {
   const handleGoogle = async () => {
     setLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/auth`,
-        extraParams: { prompt: "select_account" },
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth`,
+          queryParams: { prompt: "select_account" },
+        },
       });
-      if (result.error) throw result.error;
-      if (result.redirected) return;
-      // onAuthStateChange will pick this up; nothing else to do.
+      if (error) throw error;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Google sign-in failed";
       toast.error(msg);
+    } finally {
       setLoading(false);
     }
   };
