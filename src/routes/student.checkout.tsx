@@ -4,7 +4,8 @@ import { studentNav } from "@/components/StudentNav";
 import { cart, useCart, cartTotal, groupByShop, isBundle } from "@/lib/cart-store";
 import { formatNaira } from "@/lib/mock";
 import { MapPin, Wallet, Banknote, Check, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useStudentProfile } from "@/lib/student-profile";
 
 export const Route = createFileRoute("/student/checkout")({
   head: () => ({ meta: [{ title: "Checkout — Campus Basket" }] }),
@@ -14,14 +15,24 @@ export const Route = createFileRoute("/student/checkout")({
 function CheckoutPage() {
   const snap = useCart();
   const nav = useNavigate();
+  const { profile } = useStudentProfile();
   const [pay, setPay] = useState<"wallet"|"cash">("cash");
-  const [hall, setHall] = useState("Independence Hall");
-  const [room, setRoom] = useState("Room 214");
+  const [hall, setHall] = useState("");
+  const [room, setRoom] = useState("");
   const [note, setNote] = useState("");
   const groups = groupByShop(snap.lines);
   const bundle = isBundle(snap.lines);
   const delivery = snap.lines.length === 0 ? 0 : 350 + Math.max(0, groups.length - 1) * 200;
   const total = cartTotal(snap.lines) + delivery + 100;
+
+  useEffect(() => {
+    if (!profile?.location) return;
+    if (hall || room) return;
+
+    const parts = profile.location.split(",").map((part) => part.trim()).filter(Boolean);
+    setHall(parts[0] || profile.location);
+    setRoom(parts[1] || "");
+  }, [profile?.location, hall, room]);
 
   function place() {
     cart.clear();

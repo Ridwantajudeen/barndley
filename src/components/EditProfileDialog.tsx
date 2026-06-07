@@ -35,11 +35,12 @@ export function EditProfileButton<T extends Record<string, string>>({
 }: {
   values: T;
   fields: ProfileField[];
-  onSave: (next: T) => void;
+  onSave: (next: T) => void | Promise<void>;
   title?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<T>(values);
+  const [saving, setSaving] = useState(false);
   useEffect(() => { if (open) setDraft(values); }, [open, values]);
 
   return (
@@ -69,11 +70,28 @@ export function EditProfileButton<T extends Record<string, string>>({
           ))}
         </div>
         <DialogFooter className="flex-row justify-end gap-2">
-          <button onClick={() => setOpen(false)} className="px-3 py-2 rounded-lg text-sm bg-secondary">Cancel</button>
           <button
-            onClick={() => { onSave(draft); setOpen(false); }}
+            onClick={() => setOpen(false)}
+            className="px-3 py-2 rounded-lg text-sm bg-secondary"
+            disabled={saving}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={async () => {
+              setSaving(true);
+              try {
+                await onSave(draft);
+                setOpen(false);
+              } finally {
+                setSaving(false);
+              }
+            }}
+            disabled={saving}
             className="px-3 py-2 rounded-lg text-sm bg-foreground text-background font-semibold"
-          >Save</button>
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

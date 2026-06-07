@@ -4,6 +4,7 @@ import { studentNav } from "@/components/StudentNav";
 import { orderStages } from "@/lib/mock";
 import { Bike, Phone, MessageCircle, Check, MapPin, X, Send, Copy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useStudentProfile } from "@/lib/student-profile";
 
 export const Route = createFileRoute("/student/track/$id")({
   head: ({ params }) => ({
@@ -16,6 +17,7 @@ type ChatMsg = { from: "me" | "them"; text: string; at: string };
 
 function TrackPage() {
   const { id } = Route.useParams();
+  const { profile } = useStudentProfile();
   const [stage, setStage] = useState(1);
   useEffect(() => {
     const t = setInterval(() => setStage((s) => Math.min(orderStages.length - 1, s + 1)), 3500);
@@ -71,8 +73,8 @@ function TrackPage() {
         <ContactRow
           avatar="🏠"
           name="You · Delivery address"
-          sub="Independence Hall · Room 214"
-          location="Drop here when rider arrives"
+          sub={profile?.location?.trim() || "Add delivery address"}
+          location={profile?.location?.trim() || "Drop here when rider arrives"}
         />
       </div>
 

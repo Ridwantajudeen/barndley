@@ -5,6 +5,7 @@ import { shops, formatNaira } from "@/lib/mock";
 import { useCart, cartTotal, cartArea } from "@/lib/cart-store";
 import { MapPin, Search, Star, Clock, ShoppingBasket, Lock } from "lucide-react";
 import { useState } from "react";
+import { displayNameFromProfile, useStudentProfile } from "@/lib/student-profile";
 
 export const Route = createFileRoute("/student/")({
   head: () => ({ meta: [{ title: "Shop nearby — Campus Basket" }] }),
@@ -13,8 +14,11 @@ export const Route = createFileRoute("/student/")({
 
 function StudentHome() {
   const cart = useCart();
+  const { profile, loading } = useStudentProfile();
   const lockedArea = cartArea(cart.lines);
   const [q, setQ] = useState("");
+  const displayName = displayNameFromProfile(profile);
+  const firstName = displayName.split(/\s+/)[0] || "there";
   const filtered = shops.filter(
     (s) =>
       s.name.toLowerCase().includes(q.toLowerCase()) ||
@@ -27,10 +31,11 @@ function StudentHome() {
       nav={studentNav}
       rightSlot={
         <button className="inline-flex items-center gap-1.5 text-xs font-semibold bg-secondary px-3 py-1.5 rounded-full">
-          <MapPin className="size-3.5 text-primary" /> Indep. Hall · Rm 214
+          <MapPin className="size-3.5 text-primary" />
+          {profile?.location?.trim() || "Add delivery address"}
         </button>
       }
-      title="Hi Ada, your next market run is just a few clicks away."
+      title={loading ? "Hi there, your next market run is just a few clicks away." : `Hi ${firstName}, your next market run is just a few clicks away.`}
     >
       <div className="mt-2 relative">
         <Search className="size-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
