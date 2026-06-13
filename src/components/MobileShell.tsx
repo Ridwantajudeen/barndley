@@ -41,23 +41,14 @@ export function MobileShell({
         <nav className="fixed bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-[456px] z-40">
           <div className="card-soft shadow-lg shadow-primary/10 px-2 py-2 flex items-center justify-around">
             {nav.map((n) => {
-              const active =
-                n.to === "/" + n.to.split("/")[1]
-                  ? location.pathname === n.to ||
-                    (n.to !== "/" && location.pathname.startsWith(n.to + "/"))
-                  : location.pathname === n.to;
-              const isExact = location.pathname === n.to;
-              const matches =
-                isExact ||
-                (n.to.split("/").length === 3 &&
-                  location.pathname.startsWith(n.to));
+              const active = location.pathname === n.to;
               return (
                 <Link
                   key={n.to}
                   to={n.to}
                   className={
                     "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-[0.68rem] font-semibold transition-colors " +
-                    (matches || active
+                    (active
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground")
                   }

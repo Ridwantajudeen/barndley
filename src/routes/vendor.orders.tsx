@@ -1,171 +1,136 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { Bike, Clock, LoaderCircle, MapPin, MessageCircle, Package, Phone, User, X } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { vendorNav } from "@/components/VendorNav";
 import { formatNaira } from "@/lib/mock";
-import { useState } from "react";
-import { X, MapPin, Phone, MessageCircle, Bike, Star, Package, Clock, User } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useVendorSales, type VendorOrder } from "@/lib/vendor-sales";
+import { useVendorShop } from "@/lib/vendor-shop";
 
-type OrderItem = { name: string; qty: number; unit: string; price: number };
-type Rider = {
-  name: string;
-  phone: string;
-  rating: number;
-  trips: number;
-  plate: string;
-  eta: string;
-  avatar: string;
-} | null;
-type Order = {
-  id: string;
-  items: number;
-  total: number;
-  hall: string;
-  state: string;
-  time: string;
-  student: { name: string; phone: string };
-  lineItems: OrderItem[];
-  subtotal: number;
-  delivery: number;
-  rider: Rider;
-  placedAt: string;
-  notes?: string;
+type CustomerProfile = {
+  user_id: string;
+  display_name: string | null;
+  phone: string | null;
 };
 
-const orders: Order[] = [
-  {
-    id: "#1052",
-    items: 4,
-    total: 6900,
-    hall: "Indep. Hall · Rm 214",
-    state: "New",
-    time: "2 min ago",
-    student: { name: "Ada Okeke", phone: "+2348021110052" },
-    placedAt: "Today, 7:18 AM",
-    lineItems: [
-      { name: "Jollof rice (large)", qty: 2, unit: "plate", price: 2200 },
-      { name: "Fried plantain", qty: 1, unit: "side", price: 700 },
-      { name: "Chilled zobo", qty: 1, unit: "bottle", price: 1800 },
-    ],
-    subtotal: 6500,
-    delivery: 400,
-    rider: null,
-    notes: "Extra pepper on the plantain, please.",
-  },
-  {
-    id: "#1051",
-    items: 2,
-    total: 2900,
-    hall: "Queens Hall · Rm 18",
-    state: "Preparing",
-    time: "9 min ago",
-    student: { name: "Tomi Adebayo", phone: "+2348033330051" },
-    placedAt: "Today, 7:11 AM",
-    lineItems: [
-      { name: "Indomie special", qty: 1, unit: "plate", price: 1700 },
-      { name: "Bottled water", qty: 2, unit: "btl", price: 600 },
-    ],
-    subtotal: 2500,
-    delivery: 400,
-    rider: {
-      name: "Mary E.",
-      phone: "+2348099990051",
-      rating: 4.9,
-      trips: 312,
-      plate: "EDO-471-XA",
-      eta: "9 min after pickup",
-      avatar: "M",
-    },
-  },
-  {
-    id: "#1050",
-    items: 6,
-    total: 12400,
-    hall: "Mellanby · Rm 7",
-    state: "Out for delivery",
-    time: "18 min ago",
-    student: { name: "Chinedu Obi", phone: "+2348055550050" },
-    placedAt: "Today, 7:02 AM",
-    lineItems: [
-      { name: "Egusi & pounded yam", qty: 2, unit: "plate", price: 3500 },
-      { name: "Goat meat (extra)", qty: 2, unit: "pcs", price: 1200 },
-      { name: "Chapman", qty: 2, unit: "cup", price: 1500 },
-    ],
-    subtotal: 12000,
-    delivery: 400,
-    rider: {
-      name: "Tunde A.",
-      phone: "+2348077770050",
-      rating: 4.8,
-      trips: 488,
-      plate: "EDO-220-BK",
-      eta: "Arriving in 6 min",
-      avatar: "T",
-    },
-  },
-  {
-    id: "#1049",
-    items: 1,
-    total: 800,
-    hall: "Indep. Hall · Rm 9",
-    state: "Delivered",
-    time: "1 hr ago",
-    student: { name: "Bisi K.", phone: "+2348012340049" },
-    placedAt: "Today, 6:05 AM",
-    lineItems: [{ name: "Meat pie", qty: 1, unit: "pc", price: 800 }],
-    subtotal: 800,
-    delivery: 0,
-    rider: {
-      name: "Samuel O.",
-      phone: "+2348011110049",
-      rating: 4.7,
-      trips: 207,
-      plate: "EDO-118-LA",
-      eta: "Delivered 52 min ago",
-      avatar: "S",
-    },
-  },
-];
+type DisplayOrder = VendorOrder & {
+  customerName: string;
+  customerPhone: string | null;
+};
 
 export const Route = createFileRoute("/vendor/orders")({
-  head: () => ({ meta: [{ title: "Orders — Vendor" }] }),
+  head: () => ({ meta: [{ title: "Orders â€” Vendor" }] }),
   component: VendorOrders,
 });
 
 function VendorOrders() {
+  const { shop, loading: shopLoading } = useVendorShop();
+  const { orders, loading, refreshing } = useVendorSales(shop?.id ?? null);
   const [openId, setOpenId] = useState<string | null>(null);
-  const active = orders.find((o) => o.id === openId) || null;
+  const [profiles, setProfiles] = useState<Record<string, CustomerProfile>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    const ids = [...new Set(orders.map((order) => order.user_id).filter(Boolean))];
+
+    if (!ids.length) {
+      setProfiles({});
+      return;
+    }
+
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, phone")
+        .in("user_id", ids);
+
+      if (cancelled) return;
+
+      const next: Record<string, CustomerProfile> = {};
+      (data ?? []).forEach((row) => {
+        next[row.user_id] = row;
+      });
+      setProfiles(next);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [orders]);
+
+  const displayOrders = useMemo<DisplayOrder[]>(
+    () =>
+      orders.map((order) => ({
+        ...order,
+        customerName: profiles[order.user_id]?.display_name || "Customer",
+        customerPhone: profiles[order.user_id]?.phone ?? null,
+      })),
+    [orders, profiles],
+  );
+
+  const active = displayOrders.find((order) => order.id === openId) || null;
 
   return (
     <MobileShell nav={vendorNav} title="Incoming orders">
-      <div className="space-y-3 mt-3">
-        {orders.map((o) => (
-          <button
-            key={o.id}
-            onClick={() => setOpenId(o.id)}
-            className="w-full text-left card-soft p-4 hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="font-semibold">{o.id}</div>
-                <div className="text-xs text-foreground/60">{o.hall}</div>
-                <div className="text-xs text-foreground/50 mt-0.5">{o.time}</div>
-              </div>
-              <span className={"chip " + (o.state === "New" ? "chip-accent" : "")}>{o.state}</span>
-            </div>
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-sm text-foreground/70">{o.items} items</span>
-              <span className="font-display">{formatNaira(o.total)}</span>
-            </div>
-          </button>
-        ))}
-      </div>
+      {shopLoading && !shop?.id ? (
+        <div className="card-soft p-4 text-sm text-foreground/70 inline-flex items-center gap-2">
+          <LoaderCircle className="size-4 animate-spin" />
+          Loading orders...
+        </div>
+      ) : !shop?.id ? (
+        <div className="card-soft p-4 text-sm text-foreground/70">
+          Create your shop profile first, then real orders will appear here from Supabase.
+        </div>
+      ) : (
+        <>
+          {refreshing && (
+            <p className="mb-2 text-[0.7rem] text-foreground/50 inline-flex items-center gap-1.5">
+              <LoaderCircle className="size-3.5 animate-spin" /> Updating orders...
+            </p>
+          )}
 
-      {active && <OrderModal order={active} onClose={() => setOpenId(null)} />}
+          <div className="space-y-3 mt-3">
+            {loading && !displayOrders.length ? (
+              <div className="card-soft p-4 text-sm text-foreground/60">Loading orders...</div>
+            ) : (
+              displayOrders.map((order) => (
+                <button
+                  key={order.id}
+                  onClick={() => setOpenId(order.id)}
+                  className="w-full text-left card-soft p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="font-semibold text-sm">{order.order_code || order.id}</div>
+                      <div className="text-xs text-foreground/60 mt-0.5">{order.customerName}</div>
+                      <div className="text-xs text-foreground/50 mt-0.5">
+                        {order.placed_at} · {order.items_count} items
+                      </div>
+                    </div>
+                    <span className={"chip " + (String(order.status) === "Placed" ? "chip-accent" : "")}>
+                      {String(order.status)}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-sm text-foreground/70">{order.hall}{order.room ? ` · ${order.room}` : ""}</span>
+                    <span className="font-display">{formatNaira(order.total)}</span>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+
+          {active && <OrderModal order={active} onClose={() => setOpenId(null)} />}
+        </>
+      )}
     </MobileShell>
   );
 }
 
-function OrderModal({ order, onClose }: { order: Order; onClose: () => void }) {
+function OrderModal({ order, onClose }: { order: DisplayOrder; onClose: () => void }) {
+  const riderAssigned = Boolean(order.rider_name || order.rider_phone);
+
   return (
     <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" />
@@ -175,13 +140,15 @@ function OrderModal({ order, onClose }: { order: Order; onClose: () => void }) {
       >
         <div className="px-5 pt-5 pb-3 flex items-start justify-between border-b border-border/60">
           <div>
-            <div className="font-display text-xl leading-tight">Order {order.id}</div>
+            <div className="font-display text-xl leading-tight">Order {order.order_code || order.id}</div>
             <div className="text-xs text-foreground/60 flex items-center gap-1 mt-0.5">
-              <Clock className="size-3" /> {order.placedAt}
+              <Clock className="size-3" /> {order.placed_at}
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className={"chip " + (order.state === "New" ? "chip-accent" : "")}>{order.state}</span>
+            <span className={"chip " + (String(order.status) === "Placed" ? "chip-accent" : "")}>
+              {String(order.status)}
+            </span>
             <button
               onClick={onClose}
               aria-label="Close"
@@ -193,7 +160,6 @@ function OrderModal({ order, onClose }: { order: Order; onClose: () => void }) {
         </div>
 
         <div className="overflow-y-auto px-5 py-4 space-y-5">
-          {/* Customer */}
           <section>
             <div className="text-[0.65rem] uppercase tracking-wide text-foreground/60 font-semibold mb-2">
               Customer
@@ -203,33 +169,36 @@ function OrderModal({ order, onClose }: { order: Order; onClose: () => void }) {
                 <User className="size-4" />
               </span>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold">{order.student.name}</div>
+                <div className="text-sm font-semibold">{order.customerName}</div>
                 <div className="text-[0.7rem] text-foreground/60 flex items-center gap-1">
-                  <MapPin className="size-3" /> {order.hall}
+                  <MapPin className="size-3" /> {order.hall}{order.room ? `, ${order.room}` : ""}
                 </div>
               </div>
-              <a
-                href={`sms:${order.student.phone}`}
-                className="h-9 w-9 rounded-lg bg-background flex items-center justify-center"
-              >
-                <MessageCircle className="size-4" />
-              </a>
-              <a
-                href={`tel:${order.student.phone}`}
-                className="h-9 w-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center"
-              >
-                <Phone className="size-4" />
-              </a>
+              {order.customerPhone && (
+                <>
+                  <a
+                    href={`sms:${order.customerPhone}`}
+                    className="h-9 w-9 rounded-lg bg-background flex items-center justify-center"
+                  >
+                    <MessageCircle className="size-4" />
+                  </a>
+                  <a
+                    href={`tel:${order.customerPhone}`}
+                    className="h-9 w-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center"
+                  >
+                    <Phone className="size-4" />
+                  </a>
+                </>
+              )}
             </div>
           </section>
 
-          {/* Items */}
           <section>
             <div className="text-[0.65rem] uppercase tracking-wide text-foreground/60 font-semibold mb-2">
-              Items ({order.items})
+              Items ({order.items_count})
             </div>
             <ul className="divide-y divide-border/60 bg-card border border-border rounded-2xl">
-              {order.lineItems.map((li, i) => (
+              {order.line_items.map((li, i) => (
                 <li key={i} className="px-3 py-3 flex items-center gap-3">
                   <span className="h-9 w-9 rounded-lg bg-secondary flex items-center justify-center shrink-0">
                     <Package className="size-4" />
@@ -244,56 +213,48 @@ function OrderModal({ order, onClose }: { order: Order; onClose: () => void }) {
                 </li>
               ))}
             </ul>
-            {order.notes && (
+            {order.note && (
               <div className="mt-2 text-xs text-foreground/70 bg-accent-soft/50 border border-accent/30 rounded-xl px-3 py-2">
                 <span className="font-semibold">Note: </span>
-                {order.notes}
+                {order.note}
               </div>
             )}
           </section>
 
-          {/* Totals */}
           <section className="space-y-1.5 text-sm">
             <Row label="Subtotal" value={formatNaira(order.subtotal)} />
-            <Row label="Delivery" value={formatNaira(order.delivery)} />
+            <Row label="Delivery" value={formatNaira(order.delivery_fee)} />
+            {order.service_fee > 0 && <Row label="Service fee" value={formatNaira(order.service_fee)} />}
             <div className="border-t border-border pt-2 mt-2 flex items-center justify-between">
               <span className="font-semibold">Total</span>
               <span className="font-display text-lg">{formatNaira(order.total)}</span>
             </div>
           </section>
 
-          {/* Rider */}
           <section>
             <div className="text-[0.65rem] uppercase tracking-wide text-foreground/60 font-semibold mb-2">
               Rider
             </div>
-            {order.rider ? (
+            {riderAssigned ? (
               <div className="card-soft p-4">
                 <div className="flex items-center gap-3">
                   <span className="h-12 w-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-display text-lg">
-                    {order.rider.avatar}
+                    {(order.rider_name || "R").slice(0, 1)}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold">{order.rider.name}</div>
-                    <div className="text-[0.7rem] text-foreground/60 flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1">
-                        <Star className="size-3 fill-current" /> {order.rider.rating}
-                      </span>
-                      <span>· {order.rider.trips} trips</span>
-                    </div>
-                    <div className="text-[0.7rem] text-foreground/60 flex items-center gap-1 mt-0.5">
-                      <Bike className="size-3" /> {order.rider.plate}
-                    </div>
+                    <div className="font-semibold">{order.rider_name || "Assigned rider"}</div>
+                    {order.rider_phone && (
+                      <div className="text-[0.7rem] text-foreground/60">{order.rider_phone}</div>
+                    )}
                   </div>
-                  <a
-                    href={`tel:${order.rider.phone}`}
-                    className="h-9 w-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center"
-                  >
-                    <Phone className="size-4" />
-                  </a>
-                </div>
-                <div className="mt-3 text-xs bg-secondary/60 rounded-xl px-3 py-2">
-                  {order.rider.eta}
+                  {order.rider_phone && (
+                    <a
+                      href={`tel:${order.rider_phone}`}
+                      className="h-9 w-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center"
+                    >
+                      <Phone className="size-4" />
+                    </a>
+                  )}
                 </div>
               </div>
             ) : (
@@ -303,7 +264,7 @@ function OrderModal({ order, onClose }: { order: Order; onClose: () => void }) {
                 </div>
                 <div className="text-sm font-semibold mt-2">Awaiting rider</div>
                 <div className="text-xs text-foreground/60 mt-0.5">
-                  We're matching the nearest rider. You'll see their details here once accepted.
+                  We’ll show the rider here once one is assigned.
                 </div>
               </div>
             )}
