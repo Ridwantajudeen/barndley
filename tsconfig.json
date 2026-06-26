@@ -21,6 +21,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
     "paths": {
+      "@tanstack/react-router": ["./src/router-shim.tsx"],
       "@/*": ["./src/*"]
     }
   }

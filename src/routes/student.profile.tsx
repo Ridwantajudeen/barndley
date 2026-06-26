@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
 import { studentNav } from "@/components/StudentNav";
-import { MapPin, Phone, Mail, LogOut, ChevronRight, Shield, Loader2 } from "lucide-react";
+import { MapPin, Phone, Mail, LogOut, ChevronRight, Shield, Loader2, LoaderCircle, Package } from "lucide-react";
 import { EditProfileButton } from "@/components/EditProfileDialog";
 import { useSignOut } from "@/lib/auth-helpers";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { formatNaira } from "@/lib/mock";
 import { displayNameFromProfile, initialsFromName, profileToEdit, useStudentProfile } from "@/lib/student-profile";
+import { useStudentOrders } from "@/lib/student-orders";
 
 export const Route = createFileRoute("/student/profile")({
   head: () => ({ meta: [{ title: "You — Campus Basket" }] }),
@@ -15,7 +15,8 @@ export const Route = createFileRoute("/student/profile")({
 
 function StudentProfile() {
   const signOut = useSignOut();
-  const { userId, profile, setProfile, loading } = useStudentProfile();
+  const { profile, loading, saveProfile } = useStudentProfile();
+  const { recentOrders, loading: ordersLoading } = useStudentOrders();
   const displayName = displayNameFromProfile(profile);
   const editValues = profileToEdit(profile);
 
@@ -41,62 +42,52 @@ function StudentProfile() {
             Student · {profile?.location?.trim() || "Add delivery address"}
           </div>
         </div>
-        <EditProfileButton
-          title="Edit your profile"
-          values={editValues}
-          onSave={async (next) => {
-            if (!userId) return;
-            const previous = profile;
-            const nextProfile = {
-              ...(profile ?? {
-                id: "",
-                user_id: userId,
-                display_name: null,
-                email: null,
-                phone: null,
-                location: null,
-                avatar_url: null,
-                created_at: "",
-                updated_at: "",
-              }),
-              display_name: next.name.trim(),
-              phone: next.phone.trim(),
-              location: next.address.trim(),
-            };
-            setProfile(nextProfile);
-
-            const { error } = await supabase
-              .from("profiles")
-              .update({
-                display_name: next.name.trim(),
-                phone: next.phone.trim(),
-                location: next.address.trim(),
-              })
-              .eq("user_id", userId);
-
-            if (error) {
-              setProfile(previous);
-              toast.error(error.message);
-              throw error;
-            }
-
-            toast.success("Profile saved");
-          }}
-          fields={[
-            { key: "name", label: "Full name" },
-            { key: "phone", label: "Phone", type: "tel" },
-            { key: "address", label: "Delivery address" },
-          ]}
-        />
+        <div className="flex flex-col gap-2 shrink-0">
+          <EditProfileButton
+            title="Edit your profile"
+            values={editValues}
+            onSave={async (next) => {
+              await saveProfile(next);
+            }}
+            fields={[
+              { key: "name", label: "Full name" },
+              { key: "phone", label: "Phone", type: "tel" },
+              { key: "address", label: "Delivery address" },
+            ]}
+          />
+        </div>
       </div>
 
       <div className="card-soft p-4 mt-4">
         <div className="text-xs font-semibold text-foreground/70 mb-2">RECENT ACTIVITY</div>
-        <ul className="divide-y divide-border/60">
-          <li className="py-6 text-center text-sm text-foreground/60">
-            Your orders will appear here once you place them.
-          </li>
-        </ul>
+        {ordersLoading ? (
+          <div className="py-6 flex items-center justify-center text-sm text-foreground/60">
+            <LoaderCircle className="size-4 animate-spin mr-2" />
+            Loading your orders...
+          </div>
+        ) : recentOrders.length === 0 ? (
+          <div className="py-6 text-center text-sm text-foreground/60">
+            <Package className="size-6 mx-auto text-foreground/40" />
+            <p className="mt-2">Your orders will appear here once you place them.</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-border/60">
+            {recentOrders.map((order) => (
+              <li key={order.id} className="py-3 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-semibold text-sm truncate">{order.shop_name}</div>
+                  <div className="text-xs text-foreground/60">
+                    {new Date(order.placed_at).toLocaleString()} · {order.items_count} items
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="chip inline-flex">{order.status}</div>
+                  <div className="font-display mt-1">{formatNaira(order.total)}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="card-soft mt-4 divide-y divide-border/60">

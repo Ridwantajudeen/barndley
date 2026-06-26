@@ -1,8 +1,18 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
+import { backendRequest } from "@/lib/backend";
 
-export type StudentProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+export type StudentProfileRow = {
+  id: string;
+  user_id: string;
+  display_name: string | null;
+  email: string | null;
+  phone: string | null;
+  location: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type StudentProfileEdit = {
   name: string;
   phone: string;
@@ -54,36 +64,36 @@ export function useStudentProfile() {
 
     (async () => {
       setLoading(true);
-      const { data: auth, error } = await supabase.auth.getUser();
-
+      const payload = await backendRequest<{ profile: StudentProfileRow | null }>("/student/profile");
       if (cancelled) return;
-
-      if (error || !auth.user) {
-        setUserId(null);
+      if (!payload.profile) {
         setProfile(null);
         setLoading(false);
         return;
       }
-
-      const user = auth.user;
-      setUserId(user.id);
-
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, user_id, display_name, email, phone, location, avatar_url, created_at, updated_at")
-        .eq("user_id", user.id)
-        .maybeSingle<StudentProfileRow>();
-
-      if (cancelled) return;
-
-      setProfile(data ?? makeEmptyProfile(user.id, user.email ?? null));
+      setUserId(payload.profile.user_id);
+      setProfile(payload.profile);
       setLoading(false);
-    })();
+    })().catch(() => {
+      if (!cancelled) setLoading(false);
+    });
 
     return () => {
       cancelled = true;
     };
   }, []);
 
-  return { userId, profile, setProfile, loading };
+  async function saveProfile(next: StudentProfileEdit) {
+    const payload = await backendRequest<{ profile: StudentProfileRow | null }>("/student/profile", {
+      method: "PUT",
+      body: next,
+    });
+    if (!payload.profile) throw new Error("Could not save profile");
+    setUserId(payload.profile.user_id);
+    setProfile(payload.profile);
+    return payload.profile;
+  }
+
+  return { userId, profile, setProfile, loading, saveProfile, makeEmptyProfile };
 }
+

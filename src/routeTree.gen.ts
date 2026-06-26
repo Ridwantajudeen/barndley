@@ -34,6 +34,7 @@ import { Route as RiderProfileRouteImport } from './routes/rider.profile'
 import { Route as RiderEarningsRouteImport } from './routes/rider.earnings'
 import { Route as StudentTrackIdRouteImport } from './routes/student.track.$id'
 import { Route as StudentShopIdRouteImport } from './routes/student.shop.$id'
+import { Route as RiderTripsIdRouteImport } from './routes/rider.trips.$id'
 
 const VendorRoute = VendorRouteImport.update({
   id: '/vendor',
@@ -160,6 +161,11 @@ const StudentShopIdRoute = StudentShopIdRouteImport.update({
   path: '/shop/$id',
   getParentRoute: () => StudentRoute,
 } as any)
+const RiderTripsIdRoute = RiderTripsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => RiderTripsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -170,7 +176,7 @@ export interface FileRoutesByFullPath {
   '/rider/earnings': typeof RiderEarningsRoute
   '/rider/profile': typeof RiderProfileRoute
   '/rider/statement': typeof RiderStatementRoute
-  '/rider/trips': typeof RiderTripsRoute
+  '/rider/trips': typeof RiderTripsRouteWithChildren
   '/shop/$id': typeof ShopIdRoute
   '/student/cart': typeof StudentCartRoute
   '/student/checkout': typeof StudentCheckoutRoute
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/rider/': typeof RiderIndexRoute
   '/student/': typeof StudentIndexRoute
   '/vendor/': typeof VendorIndexRoute
+  '/rider/trips/$id': typeof RiderTripsIdRoute
   '/student/shop/$id': typeof StudentShopIdRoute
   '/student/track/$id': typeof StudentTrackIdRoute
 }
@@ -194,7 +201,7 @@ export interface FileRoutesByTo {
   '/rider/earnings': typeof RiderEarningsRoute
   '/rider/profile': typeof RiderProfileRoute
   '/rider/statement': typeof RiderStatementRoute
-  '/rider/trips': typeof RiderTripsRoute
+  '/rider/trips': typeof RiderTripsRouteWithChildren
   '/shop/$id': typeof ShopIdRoute
   '/student/cart': typeof StudentCartRoute
   '/student/checkout': typeof StudentCheckoutRoute
@@ -209,6 +216,7 @@ export interface FileRoutesByTo {
   '/rider': typeof RiderIndexRoute
   '/student': typeof StudentIndexRoute
   '/vendor': typeof VendorIndexRoute
+  '/rider/trips/$id': typeof RiderTripsIdRoute
   '/student/shop/$id': typeof StudentShopIdRoute
   '/student/track/$id': typeof StudentTrackIdRoute
 }
@@ -222,7 +230,7 @@ export interface FileRoutesById {
   '/rider/earnings': typeof RiderEarningsRoute
   '/rider/profile': typeof RiderProfileRoute
   '/rider/statement': typeof RiderStatementRoute
-  '/rider/trips': typeof RiderTripsRoute
+  '/rider/trips': typeof RiderTripsRouteWithChildren
   '/shop/$id': typeof ShopIdRoute
   '/student/cart': typeof StudentCartRoute
   '/student/checkout': typeof StudentCheckoutRoute
@@ -237,6 +245,7 @@ export interface FileRoutesById {
   '/rider/': typeof RiderIndexRoute
   '/student/': typeof StudentIndexRoute
   '/vendor/': typeof VendorIndexRoute
+  '/rider/trips/$id': typeof RiderTripsIdRoute
   '/student/shop/$id': typeof StudentShopIdRoute
   '/student/track/$id': typeof StudentTrackIdRoute
 }
@@ -266,6 +275,7 @@ export interface FileRouteTypes {
     | '/rider/'
     | '/student/'
     | '/vendor/'
+    | '/rider/trips/$id'
     | '/student/shop/$id'
     | '/student/track/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/rider'
     | '/student'
     | '/vendor'
+    | '/rider/trips/$id'
     | '/student/shop/$id'
     | '/student/track/$id'
   id:
@@ -317,6 +328,7 @@ export interface FileRouteTypes {
     | '/rider/'
     | '/student/'
     | '/vendor/'
+    | '/rider/trips/$id'
     | '/student/shop/$id'
     | '/student/track/$id'
   fileRoutesById: FileRoutesById
@@ -507,14 +519,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentShopIdRouteImport
       parentRoute: typeof StudentRoute
     }
+    '/rider/trips/$id': {
+      id: '/rider/trips/$id'
+      path: '/$id'
+      fullPath: '/rider/trips/$id'
+      preLoaderRoute: typeof RiderTripsIdRouteImport
+      parentRoute: typeof RiderTripsRoute
+    }
   }
 }
+
+interface RiderTripsRouteChildren {
+  RiderTripsIdRoute: typeof RiderTripsIdRoute
+}
+
+const RiderTripsRouteChildren: RiderTripsRouteChildren = {
+  RiderTripsIdRoute: RiderTripsIdRoute,
+}
+
+const RiderTripsRouteWithChildren = RiderTripsRoute._addFileChildren(
+  RiderTripsRouteChildren,
+)
 
 interface RiderRouteChildren {
   RiderEarningsRoute: typeof RiderEarningsRoute
   RiderProfileRoute: typeof RiderProfileRoute
   RiderStatementRoute: typeof RiderStatementRoute
-  RiderTripsRoute: typeof RiderTripsRoute
+  RiderTripsRoute: typeof RiderTripsRouteWithChildren
   RiderIndexRoute: typeof RiderIndexRoute
 }
 
@@ -522,7 +553,7 @@ const RiderRouteChildren: RiderRouteChildren = {
   RiderEarningsRoute: RiderEarningsRoute,
   RiderProfileRoute: RiderProfileRoute,
   RiderStatementRoute: RiderStatementRoute,
-  RiderTripsRoute: RiderTripsRoute,
+  RiderTripsRoute: RiderTripsRouteWithChildren,
   RiderIndexRoute: RiderIndexRoute,
 }
 

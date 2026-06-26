@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
 import { studentNav } from "@/components/StudentNav";
-import { shops, formatNaira } from "@/lib/mock";
+import { formatNaira } from "@/lib/mock";
 import { useCart, cartTotal, cartArea } from "@/lib/cart-store";
-import { MapPin, Search, Star, Clock, ShoppingBasket, Lock } from "lucide-react";
+import { LoaderCircle, MapPin, Search, Star, Clock, ShoppingBasket, Lock, Store, RotateCcw } from "lucide-react";
 import { useMemo, useState } from "react";
 import { displayNameFromProfile, useStudentProfile } from "@/lib/student-profile";
+import { matchesShopQuery, matchesStudentCategory, useLiveShops, type LiveShop } from "@/lib/live-shops";
 
 const CATEGORY_FILTERS = ["All", "Grains", "Vegetables", "Protein", "Packaged", "Drinks"] as const;
 
@@ -17,78 +18,52 @@ export const Route = createFileRoute("/student/")({
 function StudentHome() {
   const cart = useCart();
   const { profile, loading } = useStudentProfile();
+  const { shops, loading: shopsLoading, syncing, error, refresh } = useLiveShops();
   const lockedArea = cartArea(cart.lines);
   const [q, setQ] = useState("");
   const [selectedCategory, setSelectedCategory] =
     useState<(typeof CATEGORY_FILTERS)[number]>("All");
   const displayName = displayNameFromProfile(profile);
   const firstName = displayName.split(/\s+/)[0] || "there";
+  const resetFilters = () => {
+    setQ("");
+    setSelectedCategory("All");
+  };
 
   const filtered = useMemo(() => {
-    const query = normalizeSearch(q);
-    const category = normalizeSearch(selectedCategory);
-
     const scored = shops
       .map((shop) => {
-        const categoryMatches =
-          selectedCategory === "All" ||
-          shop.products.some((product) => normalizeSearch(product.category) === category);
-
-        if (!categoryMatches) {
+        if (!matchesStudentCategory(shop, selectedCategory)) {
           return null;
         }
-
-        const fields = [
-          shop.name,
-          shop.tagline,
-          shop.area,
-          ...shop.products.flatMap((product) => [
-            product.name,
-            product.category,
-            product.description,
-          ]),
-        ].map(normalizeSearch);
-
-        let score = selectedCategory === "All" ? 1 : 10;
-        if (selectedCategory !== "All") score += 20;
-
-        if (!query) {
-          return { shop, score };
+        if (!matchesShopQuery(shop, q)) return null;
+        let score = shop.rating * 10 + shop.reviews_count;
+        if (q.trim()) {
+          const query = normalizeSearch(q);
+          if (normalizeSearch(shop.name) === query) score += 120;
+          if (normalizeSearch(shop.area) === query) score += 90;
+          if (normalizeSearch(shop.location) === query) score += 70;
+          if (normalizeSearch(shop.name).includes(query)) score += 60;
+          if (normalizeSearch(shop.area).includes(query)) score += 40;
+          if (normalizeSearch(shop.location).includes(query)) score += 30;
+          for (const product of shop.products) {
+            const productName = normalizeSearch(product.name);
+            const productCategory = normalizeSearch(product.category);
+            const productDescription = normalizeSearch(product.description);
+            if (productName === query) score += 28;
+            if (productCategory === query) score += 18;
+            if (productName.includes(query)) score += 22;
+            if (productCategory.includes(query)) score += 12;
+            if (productDescription.includes(query)) score += 8;
+          }
         }
-
-        if (normalizeSearch(shop.name) === query) score += 100;
-        if (normalizeSearch(shop.area) === query) score += 85;
-        if (normalizeSearch(shop.tagline) === query) score += 70;
-
-        if (normalizeSearch(shop.name).includes(query)) score += 60;
-        if (normalizeSearch(shop.area).includes(query)) score += 45;
-        if (normalizeSearch(shop.tagline).includes(query)) score += 35;
-
-        for (const product of shop.products) {
-          const productName = normalizeSearch(product.name);
-          const productCategory = normalizeSearch(product.category);
-          const productDescription = normalizeSearch(product.description);
-
-          if (productName === query) score += 30;
-          if (productCategory === query) score += 18;
-          if (productName.includes(query)) score += 24;
-          if (productCategory.includes(query)) score += 14;
-          if (productDescription.includes(query)) score += 8;
-        }
-
-        if (score === 0) {
-          const matches = fields.some((field) => field.includes(query));
-          if (!matches) return null;
-          score = 1;
-        }
-
         return { shop, score };
       })
-      .filter((entry): entry is { shop: (typeof shops)[number]; score: number } => entry !== null)
+      .filter((entry): entry is { shop: LiveShop; score: number } => entry !== null)
       .sort((a, b) => b.score - a.score || a.shop.name.localeCompare(b.shop.name));
 
     return scored.map((entry) => entry.shop);
-  }, [q, selectedCategory]);
+  }, [q, selectedCategory, shops]);
 
   return (
     <MobileShell
@@ -105,6 +80,32 @@ function StudentHome() {
           : `Hi ${firstName}, your next market run is just a few clicks away.`
       }
     >
+      {shopsLoading && shops.length === 0 ? (
+        <div className="card-soft p-4 mb-4 inline-flex items-center gap-2 text-sm text-foreground/70">
+          <LoaderCircle className="size-4 animate-spin" />
+          Loading nearby shops...
+        </div>
+      ) : syncing ? (
+        <div className="mb-4 text-[0.7rem] text-foreground/50 inline-flex items-center gap-1.5">
+          <LoaderCircle className="size-3.5 animate-spin" />
+          Refreshing shop list...
+        </div>
+      ) : null}
+
+      {error ? (
+        <div className="card-soft p-4 mb-4 text-sm">
+          <div className="font-semibold">Shops could not load</div>
+          <p className="text-foreground/70 mt-1">{error}</p>
+          <button
+            type="button"
+            onClick={() => refresh().catch(() => undefined)}
+            className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary"
+          >
+            Try again
+          </button>
+        </div>
+      ) : null}
+
       <div className="mt-2 relative">
         <Search className="size-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <input
@@ -159,21 +160,77 @@ function StudentHome() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="card-soft p-4 text-sm text-foreground/70">
-          No stores match
-          {q.trim() ? (
-            <>
-              {" "}
-              <span className="font-semibold text-foreground">"{q.trim()}"</span>
-            </>
-          ) : null}
-          {selectedCategory !== "All" ? (
-            <>
-              {" "}
-              in <span className="font-semibold text-foreground">{selectedCategory}</span>
-            </>
-          ) : null}
-          . Try a shop name, area, product, or a different category.
+        <div className="card-soft p-5 text-sm text-foreground/70">
+          {shops.length === 0 && !shopsLoading ? (
+            <div className="flex flex-col items-start gap-4">
+              <div className="h-11 w-11 rounded-2xl bg-primary-soft flex items-center justify-center text-primary">
+                <Store className="size-5" />
+              </div>
+              <div>
+                <div className="font-display text-lg text-foreground">No shops yet</div>
+                <p className="mt-1 text-sm text-foreground/65">
+                  Once a shop is added in Supabase, it will show up here automatically.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => refresh().catch(() => undefined)}
+                  className="inline-flex items-center gap-2 rounded-xl bg-foreground px-3.5 py-2 text-sm font-semibold text-background"
+                >
+                  <RotateCcw className="size-4" />
+                  Refresh
+                </button>
+                {(q.trim() || selectedCategory !== "All") && (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="inline-flex items-center gap-2 rounded-xl bg-secondary px-3.5 py-2 text-sm font-semibold text-foreground"
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-start gap-4">
+              <div className="h-11 w-11 rounded-2xl bg-secondary flex items-center justify-center text-foreground">
+                <Search className="size-5" />
+              </div>
+              <div>
+                <div className="font-display text-lg text-foreground">No shops match your search</div>
+                <p className="mt-1 text-sm text-foreground/65">
+                  {q.trim() ? (
+                    <>
+                      No store matches <span className="font-semibold text-foreground">"{q.trim()}"</span>
+                    </>
+                  ) : (
+                    <>Try a different category or clear the current filter.</>
+                  )}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {q.trim() || selectedCategory !== "All" ? (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="inline-flex items-center gap-2 rounded-xl bg-foreground px-3.5 py-2 text-sm font-semibold text-background"
+                  >
+                    <RotateCcw className="size-4" />
+                    Clear filters
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => refresh().catch(() => undefined)}
+                  className="inline-flex items-center gap-2 rounded-xl bg-secondary px-3.5 py-2 text-sm font-semibold text-foreground"
+                >
+                  <RotateCcw className="size-4" />
+                  Refresh
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
@@ -189,9 +246,13 @@ function StudentHome() {
                   (offArea ? "opacity-50" : "")
                 }
               >
-                <div className={`h-24 bg-gradient-to-br ${s.hue} flex items-end p-3`}>
-                  <span className="text-3xl">{s.emoji}</span>
-                  <span className="ml-auto chip bg-background/80 text-foreground">
+                <div className={`h-24 bg-gradient-to-br ${s.hue} flex items-end p-3 overflow-hidden`}>
+                  {s.cover_image_url ? (
+                    <img src={s.cover_image_url} alt={s.name} className="absolute inset-0 h-full w-full object-cover" />
+                  ) : null}
+                  <div className="absolute inset-0 bg-foreground/10" />
+                  <span className="relative text-3xl">{s.emoji}</span>
+                  <span className="relative ml-auto chip bg-background/80 text-foreground">
                     <MapPin className="size-3 inline -mt-0.5 mr-0.5" />
                     {s.area}
                   </span>
@@ -204,20 +265,23 @@ function StudentHome() {
                       </div>
                       <div className="text-xs text-foreground/60 mt-0.5">{s.tagline}</div>
                     </div>
-                    {!s.open && (
+                    {!s.is_open && (
                       <span className="chip bg-foreground text-background shrink-0">Closed</span>
                     )}
                   </div>
                   <div className="mt-3 flex items-center gap-3 text-xs text-foreground/70 flex-wrap">
                     <span className="inline-flex items-center gap-1">
                       <Star className="size-3.5 fill-accent text-accent" />
-                      {s.rating} <span className="text-foreground/40">({s.reviews})</span>
+                      {s.rating.toFixed(1)} <span className="text-foreground/40">({s.reviews_count})</span>
                     </span>
                     <span className="inline-flex items-center gap-1">
-                      <Clock className="size-3.5" /> {s.etaMin} min
+                      <Clock className="size-3.5" /> {s.hours || "Hours not set"}
                     </span>
                     <span className="inline-flex items-center gap-1">
-                      <MapPin className="size-3.5" /> {s.distanceKm} km
+                      <MapPin className="size-3.5" /> {s.location}
+                    </span>
+                    <span className="chip bg-secondary text-foreground/70 ml-auto">
+                      {s.products.length} products
                     </span>
                     {offArea && (
                       <span className="chip bg-foreground/10 text-foreground/70 ml-auto">

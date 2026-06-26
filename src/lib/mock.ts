@@ -333,6 +333,8 @@ export type OrderStatus =
   | "Placed"
   | "Vendor confirmed"
   | "Rider en route to shop"
+  | "Picked up"
+  | "Student contacted"
   | "Picking items"
   | "Delivering"
   | "Delivered";
@@ -341,8 +343,8 @@ export const orderStages: OrderStatus[] = [
   "Placed",
   "Vendor confirmed",
   "Rider en route to shop",
-  "Picking items",
-  "Delivering",
+  "Picked up",
+  "Student contacted",
   "Delivered",
 ];
 
@@ -352,7 +354,7 @@ export const sampleOrders = [
     shop: "Mama Osas Foodstuff",
     items: 4,
     total: 6900,
-    status: "Delivering" as OrderStatus,
+    status: "Student contacted" as OrderStatus,
     placedAt: "Today, 13:24",
     rider: "Tunde A.",
   },

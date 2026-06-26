@@ -50,7 +50,7 @@ function Landing() {
           <div className="flex items-center gap-3">
             <Link
               to="/auth"
-              search={{ mode: "signin", role: "student" }}
+              search={{ mode: "signin" }}
               className="text-sm font-semibold text-foreground/70 hover:text-foreground"
             >
               Sign in

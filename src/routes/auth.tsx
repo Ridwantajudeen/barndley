@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Logo } from "@/components/Logo";
 import { Bike, GraduationCap, Store, Mail, Lock, User, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,10 +21,46 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-async function ensureRoleAndRoute(role: Role, navigate: ReturnType<typeof useNavigate>) {
-  // Add the selected role to this account (no-op if already present)
+async function storeRoleAndRoute(role: Role, navigate: ReturnType<typeof useNavigate>) {
   await supabase.rpc("add_user_role", { _role: role });
   navigate({ to: `/${role}`, replace: true });
+}
+
+async function resolveStoredRole(userId: string): Promise<Role> {
+  const { data } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (data?.role === "student" || data?.role === "vendor" || data?.role === "rider") {
+    return data.role;
+  }
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const metaRole = sessionData.session?.user?.user_metadata?.role;
+  if (metaRole === "student" || metaRole === "vendor" || metaRole === "rider") {
+    return metaRole;
+  }
+
+  return "student";
+}
+
+async function routeSignedInUser(navigate: ReturnType<typeof useNavigate>) {
+  const { data } = await supabase.auth.getSession();
+  const user = data.session?.user;
+  if (!user) return;
+  navigate({ to: `/${await resolveStoredRole(user.id)}`, replace: true });
+}
+
+async function waitForSession(timeoutMs = 5000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) return data.session;
+    await new Promise((resolve) => setTimeout(resolve, 150));
+  }
+  return null;
 }
 
 function AuthPage() {
@@ -36,23 +72,19 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const roleRef = useRef<Role>(initialRole);
-  roleRef.current = role;
 
-  // If already signed-in, route straight to dashboard with the chosen role.
-  // Also handle the post-Google redirect via onAuthStateChange.
   useEffect(() => {
     let cancelled = false;
 
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled || !data.session) return;
-      ensureRoleAndRoute(roleRef.current, navigate);
+      routeSignedInUser(navigate);
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
         // defer to avoid running supabase calls inside the callback
-        setTimeout(() => ensureRoleAndRoute(roleRef.current, navigate), 0);
+        setTimeout(() => routeSignedInUser(navigate), 0);
       }
     });
 
@@ -85,16 +117,19 @@ function AuthPage() {
         if (error) throw error;
         if (data.session) {
           toast.success("Welcome to Guorrow!");
-          await ensureRoleAndRoute(role, navigate);
+          await storeRoleAndRoute(role, navigate);
         } else {
           toast.success("Account created. Check your email to confirm.");
           setMode("signin");
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (!data.session) {
+          await waitForSession();
+        }
         toast.success("Signed in");
-        await ensureRoleAndRoute(role, navigate);
+        await routeSignedInUser(navigate);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
@@ -136,30 +171,32 @@ function AuthPage() {
           </h1>
           <p className="text-sm text-foreground/60 text-center mt-1">
             {mode === "signup"
-              ? "Pick how you'll use Guorrow, then sign up."
-              : "Choose how you want to continue."}
+              ? "Pick your role once, then sign up."
+              : "Sign in to your saved dashboard."}
           </p>
 
-          <div className="mt-5 grid grid-cols-3 gap-2">
-            {ROLES.map((r) => (
-              <button
-                key={r.id}
-                type="button"
-                onClick={() => setRole(r.id)}
-                className={`rounded-xl border p-3 text-left transition ${
-                  role === r.id
-                    ? "border-primary bg-primary-soft"
-                    : "border-border hover:border-foreground/30"
-                }`}
-              >
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-background/70">
-                  {r.icon}
-                </span>
-                <div className="font-semibold text-sm mt-2">{r.label}</div>
-                <div className="text-[11px] text-foreground/60 leading-tight">{r.desc}</div>
-              </button>
-            ))}
-          </div>
+          {mode === "signup" && (
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              {ROLES.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setRole(r.id)}
+                  className={`rounded-xl border p-3 text-left transition ${
+                    role === r.id
+                      ? "border-primary bg-primary-soft"
+                      : "border-border hover:border-foreground/30"
+                  }`}
+                >
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-background/70">
+                    {r.icon}
+                  </span>
+                  <div className="font-semibold text-sm mt-2">{r.label}</div>
+                  <div className="text-[11px] text-foreground/60 leading-tight">{r.desc}</div>
+                </button>
+              ))}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="mt-5 space-y-3">
             {mode === "signup" && (

@@ -1,22 +1,23 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { shops, formatNaira, type Product, type Measurement } from "@/lib/mock";
-import { cart, useCart, cartTotal } from "@/lib/cart-store";
-import { ArrowLeft, Star, Clock, MapPin, ShoppingBasket, Plus, Check } from "lucide-react";
 import { useState } from "react";
+import { ArrowLeft, AlertTriangle, Check, Clock, Heart, MapPin, Plus, ShoppingBasket, Star } from "lucide-react";
+import { cart, cartArea, cartTotal, useCart } from "@/lib/cart-store";
+import { fetchLiveShopById, type LiveShop } from "@/lib/live-shops";
+import { formatNaira, type Measurement, type Product } from "@/lib/mock";
 import { Logo } from "@/components/Logo";
 
 export const Route = createFileRoute("/shop/$id")({
-  loader: ({ params }) => {
-    const shop = shops.find((s) => s.id === params.id);
+  loader: async ({ params }) => {
+    const shop = await fetchLiveShopById(params.id);
     if (!shop) throw notFound();
     return { shop };
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: `${loaderData?.shop.name ?? "Shop"} — Campus Basket` },
-      { name: "description", content: `Order from ${loaderData?.shop.name ?? "this shop"} on Campus Basket. Fresh foodstuff delivered to your hostel.` },
-      { property: "og:title", content: `${loaderData?.shop.name ?? "Shop"} — Campus Basket` },
-      { property: "og:description", content: `Order from ${loaderData?.shop.name ?? "this shop"} on Campus Basket. Fresh foodstuff delivered to your hostel.` },
+      { title: `${loaderData?.shop.name ?? "Shop"} - Campus Basket` },
+      { name: "description", content: `Order from ${loaderData?.shop.name ?? "this shop"} on Campus Basket.` },
+      { property: "og:title", content: `${loaderData?.shop.name ?? "Shop"} - Campus Basket` },
+      { property: "og:description", content: `Order from ${loaderData?.shop.name ?? "this shop"} on Campus Basket.` },
       { property: "og:type", content: "website" },
     ],
   }),
@@ -24,10 +25,12 @@ export const Route = createFileRoute("/shop/$id")({
 });
 
 function PublicShopPage() {
-  const data = Route.useLoaderData() as { shop: typeof shops[number] };
-  const shop = data.shop;
+  const { shop } = Route.useLoaderData() as { shop: LiveShop };
   const cartSnap = useCart();
+  const lockedArea = cartArea(cartSnap.lines);
+  const blocked = lockedArea !== null && lockedArea !== shop.area;
   const [openProduct, setOpenProduct] = useState<Product | null>(null);
+  const [blockMsg, setBlockMsg] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen flex justify-center">
@@ -35,33 +38,58 @@ function PublicShopPage() {
         <header className="sticky top-0 z-30 px-5 pt-5 pb-3 backdrop-blur-md bg-background/60 border-b border-border/50">
           <div className="flex items-center justify-between">
             <Logo to="/" />
-            <Link
-              to="/student"
-              className="inline-flex items-center gap-1 text-xs font-semibold bg-secondary px-3 py-1.5 rounded-full"
-            >
+            <Link to="/student" className="inline-flex items-center gap-1 text-xs font-semibold bg-secondary px-3 py-1.5 rounded-full">
               Browse shops
             </Link>
           </div>
         </header>
 
         <main className="flex-1 px-5 pt-4 pb-28">
-          <div className={`card-soft overflow-hidden`}>
-            <div className={`h-32 bg-gradient-to-br ${shop.hue} flex items-end p-4`}>
-              <span className="text-5xl">{shop.emoji}</span>
+          <div className="card-soft overflow-hidden">
+            <div className={`relative h-32 bg-gradient-to-br ${shop.hue} flex items-end p-4 overflow-hidden`}>
+              {shop.cover_image_url ? (
+                <img src={shop.cover_image_url} alt={shop.name} className="absolute inset-0 h-full w-full object-cover" />
+              ) : null}
+              <div className="absolute inset-0 bg-foreground/10" />
+              <span className="relative text-5xl">{shop.emoji}</span>
+              <button className="relative ml-auto h-9 w-9 rounded-full bg-background/70 inline-flex items-center justify-center">
+                <Heart className="size-4" />
+              </button>
             </div>
             <div className="p-4">
               <h2 className="font-display text-2xl">{shop.name}</h2>
               <p className="text-sm text-foreground/60">{shop.tagline}</p>
               <div className="mt-3 flex items-center gap-3 text-xs text-foreground/70 flex-wrap">
-                <span className="inline-flex items-center gap-1"><Star className="size-3.5 fill-accent text-accent"/>{shop.rating} ({shop.reviews})</span>
-                <span className="inline-flex items-center gap-1"><Clock className="size-3.5"/>{shop.hours}</span>
-                <span className="inline-flex items-center gap-1"><MapPin className="size-3.5"/>{shop.distanceKm} km</span>
-                <span className={"chip " + (shop.open ? "" : "bg-foreground text-background")}>
-                  {shop.open ? "Open now" : "Closed"}
+                <span className="inline-flex items-center gap-1">
+                  <Star className="size-3.5 fill-accent text-accent" />
+                  {shop.rating.toFixed(1)} ({shop.reviews_count})
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="size-3.5" />
+                  {shop.hours || "Hours not set"}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="size-3.5" />
+                  {shop.area} - {shop.location}
+                </span>
+                <span className={"chip " + (shop.is_open ? "" : "bg-foreground text-background")}>
+                  {shop.is_open ? "Open now" : "Closed"}
                 </span>
               </div>
             </div>
           </div>
+
+          {blocked && (
+            <div className="mt-3 card-soft p-3 flex items-start gap-2 border border-destructive/30 bg-destructive/5">
+              <AlertTriangle className="size-4 text-destructive mt-0.5 shrink-0" />
+              <div className="text-xs">
+                <div className="font-semibold">Different area - cannot pair</div>
+                <div className="text-foreground/70 mt-0.5">
+                  Your basket is paired with <b>{lockedArea}</b> shops. {shop.name} is in <b>{shop.area}</b>.
+                </div>
+              </div>
+            </div>
+          )}
 
           <h3 className="font-display text-lg mt-6 mb-2">Available products</h3>
           <div className="grid grid-cols-2 gap-3">
@@ -72,14 +100,18 @@ function PublicShopPage() {
                 onClick={() => setOpenProduct(p)}
                 className="card-soft p-3 text-left disabled:opacity-50"
               >
-                <div className="h-16 rounded-xl bg-primary-soft/60 flex items-center justify-center text-3xl mb-2">
-                  {p.emoji}
+                <div className="h-16 rounded-xl bg-primary-soft/60 flex items-center justify-center text-3xl mb-2 overflow-hidden">
+                  {p.photos && p.photos[0] ? (
+                    <img src={p.photos[0]} alt={p.name} className="h-full w-full object-cover" />
+                  ) : (
+                    p.emoji
+                  )}
                 </div>
                 <div className="font-semibold text-sm leading-tight">{p.name}</div>
                 <div className="text-[0.7rem] text-foreground/60 mt-0.5">{p.category}</div>
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-xs text-foreground/70">
-                    from {formatNaira(Math.min(...p.measurements.map(m=>m.price)))}
+                    from {formatNaira(Math.min(...p.measurements.map((m) => m.price)))}
                   </span>
                   <span className="h-7 w-7 rounded-full bg-primary text-primary-foreground inline-flex items-center justify-center">
                     <Plus className="size-4" />
@@ -89,7 +121,7 @@ function PublicShopPage() {
             ))}
             {shop.products.length === 0 && (
               <div className="col-span-2 text-center text-sm text-foreground/60 py-8">
-                This shop hasn't listed products yet.
+                This shop has not listed products yet.
               </div>
             )}
           </div>
@@ -140,12 +172,13 @@ function MeasurementSheet({
   onAdd,
 }: {
   product: Product;
-  shop: typeof shops[number];
+  shop: LiveShop;
   onClose: () => void;
   onAdd: (m: Measurement) => void;
 }) {
   const [picked, setPicked] = useState<string>(product.measurements[0]?.id ?? "");
   const chosen = product.measurements.find((m) => m.id === picked);
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-foreground/30 backdrop-blur-sm" />
@@ -154,34 +187,18 @@ function MeasurementSheet({
         className="relative bg-background rounded-t-3xl w-full max-w-[480px] p-5 pb-7 shadow-2xl"
       >
         <div className="mx-auto h-1.5 w-10 rounded-full bg-border mb-4" />
-        {product.photos && product.photos.length > 0 && (
-          <div className="-mx-5 mb-4 px-5 overflow-x-auto">
-            <div className="flex gap-2">
-              {product.photos.map((src, i) => (
-                <img
-                  key={i}
-                  src={src}
-                  alt={`${product.name} ${i+1}`}
-                  className="h-40 w-40 object-cover rounded-2xl shrink-0 border border-border"
-                />
-              ))}
-            </div>
-          </div>
-        )}
         <div className="flex items-start gap-3">
           <div className="h-14 w-14 rounded-2xl bg-primary-soft flex items-center justify-center text-3xl">
             {product.emoji}
           </div>
           <div className="flex-1">
             <div className="font-display text-lg">{product.name}</div>
-            <p className="text-xs text-foreground/60 mt-0.5">{product.description}</p>
+            <p className="text-xs text-foreground/60 mt-0.5">from {shop.name}</p>
           </div>
         </div>
 
         <div className="mt-5">
-          <div className="text-xs font-semibold text-foreground/70 mb-2">
-            CHOOSE A MEASUREMENT
-          </div>
+          <div className="text-xs font-semibold text-foreground/70 mb-2">CHOOSE A MEASUREMENT</div>
           <div className="space-y-2">
             {product.measurements.map((m) => (
               <button
@@ -189,17 +206,11 @@ function MeasurementSheet({
                 onClick={() => setPicked(m.id)}
                 className={
                   "w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left " +
-                  (picked === m.id
-                    ? "border-primary bg-primary-soft"
-                    : "border-border bg-card")
+                  (picked === m.id ? "border-primary bg-primary-soft" : "border-border bg-card")
                 }
               >
                 <span className="inline-flex items-center gap-2 text-sm font-medium">
-                  {picked === m.id ? (
-                    <Check className="size-4 text-primary" />
-                  ) : (
-                    <span className="h-4 w-4 rounded-full border border-border" />
-                  )}
+                  {picked === m.id ? <Check className="size-4 text-primary" /> : <span className="h-4 w-4 rounded-full border border-border" />}
                   {m.label}
                 </span>
                 <span className="font-display">{formatNaira(m.price)}</span>
@@ -213,7 +224,7 @@ function MeasurementSheet({
           onClick={() => chosen && onAdd(chosen)}
           className="mt-5 w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold inline-flex items-center justify-center gap-2"
         >
-          Add to basket — {chosen ? formatNaira(chosen.price) : ""}
+          Add to basket - {chosen ? formatNaira(chosen.price) : ""}
         </button>
       </div>
     </div>

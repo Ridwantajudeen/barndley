@@ -3,9 +3,10 @@ import { MobileShell } from "@/components/MobileShell";
 import { studentNav } from "@/components/StudentNav";
 import { cart, useCart, cartTotal, groupByShop, isBundle } from "@/lib/cart-store";
 import { formatNaira } from "@/lib/mock";
-import { MapPin, Wallet, Banknote, Check, Sparkles } from "lucide-react";
+import { LoaderCircle, MapPin, Wallet, Banknote, Check, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useStudentProfile } from "@/lib/student-profile";
+import { backendRequest } from "@/lib/backend";
 
 export const Route = createFileRoute("/student/checkout")({
   head: () => ({ meta: [{ title: "Checkout — Campus Basket" }] }),
@@ -20,23 +21,55 @@ function CheckoutPage() {
   const [hall, setHall] = useState("");
   const [room, setRoom] = useState("");
   const [note, setNote] = useState("");
+  const [placing, setPlacing] = useState(false);
+  const [placeError, setPlaceError] = useState<string | null>(null);
   const groups = groupByShop(snap.lines);
   const bundle = isBundle(snap.lines);
   const delivery = snap.lines.length === 0 ? 0 : 350 + Math.max(0, groups.length - 1) * 200;
   const total = cartTotal(snap.lines) + delivery + 100;
+  const hallRequired = !hall.trim();
+  const roomRequired = !room.trim();
+  const canPlace = snap.lines.length > 0 && !placing && !hallRequired && !roomRequired;
 
   useEffect(() => {
     if (!profile?.location) return;
-    if (hall || room) return;
+    if (hall.trim() || room.trim()) return;
 
-    const parts = profile.location.split(",").map((part) => part.trim()).filter(Boolean);
-    setHall(parts[0] || profile.location);
-    setRoom(parts[1] || "");
+    const parts = profile.location
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    setHall(parts[0] || profile.location.trim());
+    setRoom(parts.slice(1).join(", ") || "");
   }, [profile?.location, hall, room]);
 
-  function place() {
-    cart.clear();
-    nav({ to: "/student/track/$id", params: { id: "CB-NEW" } });
+  async function place() {
+    if (placing || snap.lines.length === 0) return;
+    if (!hall.trim() || !room.trim()) {
+      setPlaceError("Enter your hall and room before checkout.");
+      return;
+    }
+    setPlaceError(null);
+    setPlacing(true);
+    try {
+      const payload = await backendRequest<{ order: { id: string } }>("/student/orders", {
+        method: "POST",
+        body: {
+          hall: hall.trim(),
+          room: room.trim(),
+          note: note.trim() || null,
+          payment_method: pay,
+          lines: snap.lines,
+        },
+      });
+      cart.clear();
+      nav({ to: "/student/track/$id", params: { id: payload.order.id } });
+    } catch (err) {
+      setPlaceError(err instanceof Error ? err.message : "Failed to place order");
+    } finally {
+      setPlacing(false);
+    }
   }
 
   return (
@@ -57,8 +90,29 @@ function CheckoutPage() {
         <div className="card-soft p-3 flex items-start gap-3">
           <MapPin className="size-5 text-primary mt-0.5" />
           <div className="flex-1 space-y-2">
-            <input className="w-full bg-transparent text-sm font-semibold focus:outline-none" value={hall} onChange={(e)=>setHall(e.target.value)} />
-            <input className="w-full bg-transparent text-xs text-foreground/70 focus:outline-none" value={room} onChange={(e)=>setRoom(e.target.value)} />
+            <label className="block">
+              <span className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-wide text-foreground/60">Hall</span>
+              <input
+                required
+                className="w-full bg-transparent text-sm font-semibold text-foreground placeholder:text-foreground/35 focus:outline-none"
+                value={hall}
+                onChange={(e) => setHall(e.target.value)}
+                placeholder="e.g. Hall 1"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-wide text-foreground/60">Room</span>
+              <input
+                required
+                className="w-full bg-transparent text-sm text-foreground placeholder:text-foreground/35 focus:outline-none"
+                value={room}
+                onChange={(e) => setRoom(e.target.value)}
+                placeholder="e.g. 204"
+              />
+            </label>
+            <p className="pt-1 text-[0.7rem] text-foreground/50">
+              We need both hall and room so the rider can find you.
+            </p>
           </div>
         </div>
       </Section>
@@ -94,11 +148,13 @@ function CheckoutPage() {
 
       <button
         onClick={place}
-        disabled={snap.lines.length===0}
-        className="mt-5 w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold disabled:opacity-50"
+        disabled={!canPlace}
+        className="mt-5 w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
       >
-        Place order
+        {placing ? <LoaderCircle className="size-4 animate-spin" /> : null}
+        {placing ? "Placing order..." : hallRequired || roomRequired ? "Enter hall and room" : "Place order"}
       </button>
+      {placeError ? <p className="mt-2 text-sm text-red-500">{placeError}</p> : null}
     </MobileShell>
   );
 }
@@ -130,3 +186,5 @@ function PayOption({ active, onClick, icon, label }:{active:boolean;onClick:()=>
     </button>
   );
 }
+
+

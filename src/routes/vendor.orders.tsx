@@ -1,18 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { Bike, Clock, LoaderCircle, MapPin, MessageCircle, Package, Phone, User, X } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { vendorNav } from "@/components/VendorNav";
 import { formatNaira } from "@/lib/mock";
-import { supabase } from "@/integrations/supabase/client";
 import { useVendorSales, type VendorOrder } from "@/lib/vendor-sales";
 import { useVendorShop } from "@/lib/vendor-shop";
-
-type CustomerProfile = {
-  user_id: string;
-  display_name: string | null;
-  phone: string | null;
-};
 
 type DisplayOrder = VendorOrder & {
   customerName: string;
@@ -20,7 +13,7 @@ type DisplayOrder = VendorOrder & {
 };
 
 export const Route = createFileRoute("/vendor/orders")({
-  head: () => ({ meta: [{ title: "Orders â€” Vendor" }] }),
+  head: () => ({ meta: [{ title: "Orders - Vendor" }] }),
   component: VendorOrders,
 });
 
@@ -28,46 +21,12 @@ function VendorOrders() {
   const { shop, loading: shopLoading } = useVendorShop();
   const { orders, loading, refreshing } = useVendorSales(shop?.id ?? null);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [profiles, setProfiles] = useState<Record<string, CustomerProfile>>({});
 
-  useEffect(() => {
-    let cancelled = false;
-    const ids = [...new Set(orders.map((order) => order.user_id).filter(Boolean))];
-
-    if (!ids.length) {
-      setProfiles({});
-      return;
-    }
-
-    (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("user_id, display_name, phone")
-        .in("user_id", ids);
-
-      if (cancelled) return;
-
-      const next: Record<string, CustomerProfile> = {};
-      (data ?? []).forEach((row) => {
-        next[row.user_id] = row;
-      });
-      setProfiles(next);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [orders]);
-
-  const displayOrders = useMemo<DisplayOrder[]>(
-    () =>
-      orders.map((order) => ({
-        ...order,
-        customerName: profiles[order.user_id]?.display_name || "Customer",
-        customerPhone: profiles[order.user_id]?.phone ?? null,
-      })),
-    [orders, profiles],
-  );
+  const displayOrders = orders.map((order) => ({
+    ...order,
+    customerName: order.customer_name || "Customer",
+    customerPhone: order.customer_phone ?? null,
+  })) satisfies DisplayOrder[];
 
   const active = displayOrders.find((order) => order.id === openId) || null;
 
@@ -80,7 +39,7 @@ function VendorOrders() {
         </div>
       ) : !shop?.id ? (
         <div className="card-soft p-4 text-sm text-foreground/70">
-          Create your shop profile first, then real orders will appear here from Supabase.
+          Create your shop profile first, then real orders will appear here from the backend.
         </div>
       ) : (
         <>
@@ -105,7 +64,7 @@ function VendorOrders() {
                       <div className="font-semibold text-sm">{order.order_code || order.id}</div>
                       <div className="text-xs text-foreground/60 mt-0.5">{order.customerName}</div>
                       <div className="text-xs text-foreground/50 mt-0.5">
-                        {order.placed_at} · {order.items_count} items
+                        {new Date(order.placed_at).toLocaleString()} · {order.items_count} items
                       </div>
                     </div>
                     <span className={"chip " + (String(order.status) === "Placed" ? "chip-accent" : "")}>
@@ -113,7 +72,10 @@ function VendorOrders() {
                     </span>
                   </div>
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="text-sm text-foreground/70">{order.hall}{order.room ? ` · ${order.room}` : ""}</span>
+                    <span className="text-sm text-foreground/70">
+                      {order.hall}
+                      {order.room ? ` · ${order.room}` : ""}
+                    </span>
                     <span className="font-display">{formatNaira(order.total)}</span>
                   </div>
                 </button>
@@ -130,6 +92,7 @@ function VendorOrders() {
 
 function OrderModal({ order, onClose }: { order: DisplayOrder; onClose: () => void }) {
   const riderAssigned = Boolean(order.rider_name || order.rider_phone);
+  const statusNote = getOrderStatusNote(String(order.status));
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center" onClick={onClose}>
@@ -142,28 +105,27 @@ function OrderModal({ order, onClose }: { order: DisplayOrder; onClose: () => vo
           <div>
             <div className="font-display text-xl leading-tight">Order {order.order_code || order.id}</div>
             <div className="text-xs text-foreground/60 flex items-center gap-1 mt-0.5">
-              <Clock className="size-3" /> {order.placed_at}
+              <Clock className="size-3" /> {new Date(order.placed_at).toLocaleString()}
             </div>
           </div>
           <div className="flex items-center gap-2">
             <span className={"chip " + (String(order.status) === "Placed" ? "chip-accent" : "")}>
               {String(order.status)}
             </span>
-            <button
-              onClick={onClose}
-              aria-label="Close"
-              className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center"
-            >
+            <button onClick={onClose} aria-label="Close" className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center">
               <X className="size-4" />
             </button>
           </div>
         </div>
 
         <div className="overflow-y-auto px-5 py-4 space-y-5">
+          <div className="rounded-2xl bg-secondary/60 px-4 py-3 text-sm">
+            <div className="text-[0.65rem] uppercase tracking-wide text-foreground/60 font-semibold">Status update</div>
+            <div className="font-medium mt-0.5">{statusNote}</div>
+          </div>
+
           <section>
-            <div className="text-[0.65rem] uppercase tracking-wide text-foreground/60 font-semibold mb-2">
-              Customer
-            </div>
+            <div className="text-[0.65rem] uppercase tracking-wide text-foreground/60 font-semibold mb-2">Customer</div>
             <div className="flex items-center gap-3 bg-secondary/60 rounded-2xl p-3">
               <span className="h-10 w-10 rounded-xl bg-foreground text-background flex items-center justify-center">
                 <User className="size-4" />
@@ -171,21 +133,15 @@ function OrderModal({ order, onClose }: { order: DisplayOrder; onClose: () => vo
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold">{order.customerName}</div>
                 <div className="text-[0.7rem] text-foreground/60 flex items-center gap-1">
-                  <MapPin className="size-3" /> {order.hall}{order.room ? `, ${order.room}` : ""}
+                  <MapPin className="size-3" /> {order.delivery_address}
                 </div>
               </div>
               {order.customerPhone && (
                 <>
-                  <a
-                    href={`sms:${order.customerPhone}`}
-                    className="h-9 w-9 rounded-lg bg-background flex items-center justify-center"
-                  >
+                  <a href={`sms:${order.customerPhone}`} className="h-9 w-9 rounded-lg bg-background flex items-center justify-center">
                     <MessageCircle className="size-4" />
                   </a>
-                  <a
-                    href={`tel:${order.customerPhone}`}
-                    className="h-9 w-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center"
-                  >
+                  <a href={`tel:${order.customerPhone}`} className="h-9 w-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
                     <Phone className="size-4" />
                   </a>
                 </>
@@ -232,9 +188,7 @@ function OrderModal({ order, onClose }: { order: DisplayOrder; onClose: () => vo
           </section>
 
           <section>
-            <div className="text-[0.65rem] uppercase tracking-wide text-foreground/60 font-semibold mb-2">
-              Rider
-            </div>
+            <div className="text-[0.65rem] uppercase tracking-wide text-foreground/60 font-semibold mb-2">Rider</div>
             {riderAssigned ? (
               <div className="card-soft p-4">
                 <div className="flex items-center gap-3">
@@ -243,15 +197,10 @@ function OrderModal({ order, onClose }: { order: DisplayOrder; onClose: () => vo
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold">{order.rider_name || "Assigned rider"}</div>
-                    {order.rider_phone && (
-                      <div className="text-[0.7rem] text-foreground/60">{order.rider_phone}</div>
-                    )}
+                    {order.rider_phone && <div className="text-[0.7rem] text-foreground/60">{order.rider_phone}</div>}
                   </div>
                   {order.rider_phone && (
-                    <a
-                      href={`tel:${order.rider_phone}`}
-                      className="h-9 w-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center"
-                    >
+                    <a href={`tel:${order.rider_phone}`} className="h-9 w-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
                       <Phone className="size-4" />
                     </a>
                   )}
@@ -263,9 +212,7 @@ function OrderModal({ order, onClose }: { order: DisplayOrder; onClose: () => vo
                   <Bike className="size-4 text-foreground/60" />
                 </div>
                 <div className="text-sm font-semibold mt-2">Awaiting rider</div>
-                <div className="text-xs text-foreground/60 mt-0.5">
-                  We’ll show the rider here once one is assigned.
-                </div>
+                <div className="text-xs text-foreground/60 mt-0.5">We’ll show the rider here once one is assigned.</div>
               </div>
             )}
           </section>
@@ -273,6 +220,23 @@ function OrderModal({ order, onClose }: { order: DisplayOrder; onClose: () => vo
       </div>
     </div>
   );
+}
+
+function getOrderStatusNote(status: string) {
+  switch (status) {
+    case "Rider en route to shop":
+      return "The rider is on the way to collect the order.";
+    case "Picked up":
+      return "The rider has marked the order as picked up.";
+    case "Student contacted":
+      return "The rider has contacted the student and is on the delivery leg.";
+    case "Delivering":
+      return "The rider is on the way to the student.";
+    case "Delivered":
+      return "The order has been completed.";
+    default:
+      return "The order is waiting for the next update.";
+  }
 }
 
 function Row({ label, value }: { label: string; value: string }) {

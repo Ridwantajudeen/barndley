@@ -1,37 +1,71 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { ChevronRight, LoaderCircle, MapPin, Sparkles, Store } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { riderNav } from "@/components/RiderNav";
 import { formatNaira } from "@/lib/mock";
-import { Sparkles } from "lucide-react";
-
-const trips = [
-  { id: "TR-218", shop: "Mama Osas", drop: "Indep. Hall", payout: 850, when: "Today, 13:24", status: "Active", bundle: false },
-  { id: "TR-219", shop: "Bundle · 3 shops", drop: "Mellanby Hall", payout: 1450, when: "Today, 12:10", status: "Done", bundle: true },
-  { id: "TR-217", shop: "Iya Bunmi", drop: "Queens Hall", payout: 700, when: "Today, 11:02", status: "Done", bundle: false },
-  { id: "TR-216", shop: "Brother K", drop: "Mellanby", payout: 600, when: "Today, 09:45", status: "Done", bundle: false },
-];
+import { useRiderOrders } from "@/lib/rider-workspace";
 
 export const Route = createFileRoute("/rider/trips")({
-  head: () => ({ meta: [{ title: "Trips — Rider" }] }),
-  component: () => (
-    <MobileShell nav={riderNav} title="Your trips">
-      <div className="space-y-3 mt-3">
-        {trips.map((t) => (
-          <div key={t.id} className={"card-soft p-4 flex items-center gap-3 " + (t.bundle ? "ring-2 ring-accent bg-accent-soft/30" : "")}>
-            <div className={"h-11 w-11 rounded-xl flex items-center justify-center " + (t.bundle ? "bg-accent text-accent-foreground" : "bg-primary-soft")}>
-              {t.bundle ? <Sparkles className="size-5"/> : "🚲"}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm truncate">{t.shop} → {t.drop}</div>
-              <div className="text-xs text-foreground/60">{t.when} · {t.id}{t.bundle ? " · Multi-shop" : ""}</div>
-            </div>
-            <div className="text-right shrink-0">
-              <div className="font-display">{formatNaira(t.payout)}</div>
-              <span className={"chip " + (t.status === "Active" ? "chip-accent" : "")}>{t.status}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </MobileShell>
-  ),
+  head: () => ({ meta: [{ title: "Trips - Rider" }] }),
+  component: RiderTrips,
 });
+
+function RiderTrips() {
+  const { assignedOrders, loading, syncing } = useRiderOrders();
+  const navigate = useNavigate();
+
+  return (
+    <MobileShell nav={riderNav} title="Your trips">
+      {syncing ? (
+        <p className="mb-2 text-[0.7rem] text-foreground/50 inline-flex items-center gap-1.5">
+          <LoaderCircle className="size-3.5 animate-spin" /> Updating trips...
+        </p>
+      ) : null}
+
+      {loading && assignedOrders.length === 0 ? (
+        <div className="card-soft p-4 text-sm text-foreground/60 inline-flex items-center gap-2">
+          <LoaderCircle className="size-4 animate-spin" />
+          Loading trips...
+        </div>
+      ) : assignedOrders.length === 0 ? (
+        <div className="card-soft p-6 text-center text-sm text-foreground/60">
+          You do not have any active trips yet. Accepted orders will show here.
+        </div>
+      ) : (
+        <div className="space-y-3 mt-3">
+          {assignedOrders.map((trip) => (
+            <button
+              key={trip.id}
+              type="button"
+              onClick={() => navigate({ to: "/rider/trips/$id", params: { id: trip.id } })}
+              className={"w-full text-left card-soft p-4 flex items-center gap-3 hover:shadow-md transition-shadow " + (trip.bundle ? "ring-2 ring-accent bg-accent-soft/30" : "")}
+            >
+              <div className={"h-11 w-11 rounded-xl flex items-center justify-center shrink-0 " + (trip.bundle ? "bg-accent text-accent-foreground" : "bg-primary-soft")}>
+                {trip.bundle ? <Sparkles className="size-5" /> : <Store className="size-5" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-sm truncate">
+                  {trip.shop_name} → {trip.delivery_address}
+                </div>
+                <div className="text-xs text-foreground/60 mt-0.5">
+                  {new Date(trip.placed_at).toLocaleString()} · {trip.order_code}
+                </div>
+                <div className="text-xs text-foreground/50 mt-0.5 truncate">
+                  <MapPin className="size-3 inline-block mr-1" />
+                  {trip.shop_area} - {trip.shop_location}
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="font-display">{formatNaira(trip.delivery_fee)}</div>
+                <span className={"chip " + (String(trip.status) === "Delivered" ? "" : "chip-accent")}>{String(trip.status)}</span>
+                <div className="mt-2 text-xs text-primary inline-flex items-center gap-1 justify-end w-full">
+                  Open trip <ChevronRight className="size-3.5" />
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </MobileShell>
+  );
+}

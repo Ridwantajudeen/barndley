@@ -1,8 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
-
-type OrderRow = Tables<"orders">;
+import { backendRequest } from "@/lib/backend";
 
 export type VendorSalesLineItem = {
   name: string;
@@ -12,8 +9,32 @@ export type VendorSalesLineItem = {
   shop?: string;
 };
 
-export type VendorOrder = Omit<OrderRow, "line_items"> & {
+export type VendorOrder = {
+  id: string;
+  order_code: string;
+  placed_at: string;
+  status: string;
+  total: number;
+  subtotal: number;
+  delivery_fee: number;
+  service_fee: number;
+  items_count: number;
+  hall: string;
+  room: string;
   line_items: VendorSalesLineItem[];
+  shop_name: string;
+  shop_id: string | null;
+  shop_names: string[];
+  delivery_address: string;
+  rider_name: string | null;
+  rider_phone: string | null;
+  rider_user_id: string | null;
+  bundle: boolean;
+  note: string | null;
+  payment_method: string;
+  user_id: string;
+  customer_name: string;
+  customer_phone: string | null;
 };
 
 export type VendorSalesSummary = {
@@ -26,46 +47,13 @@ export type VendorSalesSummary = {
   recentOrders: VendorOrder[];
 };
 
+type VendorSalesPayload = {
+  shop: unknown;
+  orders: VendorOrder[];
+  summary: VendorSalesSummary;
+};
+
 const orderCache = new Map<string, VendorOrder[]>();
-
-function parseLineItems(value: OrderRow["line_items"]): VendorSalesLineItem[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => {
-      if (!item || typeof item !== "object") return null;
-      const candidate = item as Record<string, unknown>;
-      const name = typeof candidate.name === "string" ? candidate.name : "";
-      if (!name) return null;
-      return {
-        name,
-        qty: Number(candidate.qty ?? 0),
-        unit: typeof candidate.unit === "string" ? candidate.unit : "",
-        price: Number(candidate.price ?? 0),
-        shop: typeof candidate.shop === "string" ? candidate.shop : undefined,
-      };
-    })
-    .filter((item): item is VendorSalesLineItem => Boolean(item));
-}
-
-function mapOrder(row: OrderRow): VendorOrder {
-  return {
-    ...row,
-    line_items: parseLineItems(row.line_items),
-  };
-}
-
-function isSameLocalDay(left: string, right: Date) {
-  const a = new Date(left);
-  return (
-    a.getFullYear() === right.getFullYear() &&
-    a.getMonth() === right.getMonth() &&
-    a.getDate() === right.getDate()
-  );
-}
-
-function startOfLocalDay(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
 
 export function useVendorSales(shopId: string | null | undefined) {
   const [orders, setOrders] = useState<VendorOrder[]>(() => (shopId ? orderCache.get(shopId) ?? [] : []));
@@ -93,28 +81,19 @@ export function useVendorSales(shopId: string | null | undefined) {
     }
 
     (async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .select(
-          "id, order_code, placed_at, status, total, subtotal, delivery_fee, items_count, hall, room, line_items, shop_name, delivery_address, rider_name, rider_phone, bundle, note",
-        )
-        .eq("shop_id", shopId)
-        .order("placed_at", { ascending: false });
-
+      const payload = await backendRequest<VendorSalesPayload>("/vendor/orders");
       if (cancelled) return;
-
-      if (error) {
-        setLoading(false);
-        setRefreshing(false);
-        return;
-      }
-
-      const next = (data ?? []).map(mapOrder);
+      const next = payload.orders ?? [];
       orderCache.set(shopId, next);
       setOrders(next);
       setLoading(false);
       setRefreshing(false);
-    })();
+    })().catch(() => {
+      if (!cancelled) {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    });
 
     return () => {
       cancelled = true;
@@ -123,30 +102,21 @@ export function useVendorSales(shopId: string | null | undefined) {
 
   const summary = useMemo<VendorSalesSummary>(() => {
     const now = new Date();
-    const weekStart = startOfLocalDay(now);
-    weekStart.setDate(weekStart.getDate() - 6);
+    const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
 
     const revenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
     const availableToWithdraw = orders
       .filter((order) => String(order.status) === "Delivered")
       .reduce((sum, order) => sum + Number(order.total || 0), 0);
-    const ordersToday = orders.filter((order) => isSameLocalDay(order.placed_at, now)).length;
+    const ordersToday = orders.filter((order) => new Date(order.placed_at).toDateString() === now.toDateString()).length;
     const avgBasket = orders.length ? revenue / orders.length : 0;
 
-    const dayTotals = Array.from({ length: 7 }, (_, index) => {
-      const date = new Date(weekStart);
-      date.setDate(weekStart.getDate() + index);
-      const total = orders
-        .filter((order) => {
-          const placed = new Date(order.placed_at);
-          return (
-            placed.getFullYear() === date.getFullYear() &&
-            placed.getMonth() === date.getMonth() &&
-            placed.getDate() === date.getDate()
-          );
-        })
+    const weekRevenue = Array.from({ length: 7 }, (_, index) => {
+      const day = new Date(weekStart);
+      day.setDate(weekStart.getDate() + index);
+      return orders
+        .filter((order) => new Date(order.placed_at).toDateString() === day.toDateString())
         .reduce((sum, order) => sum + Number(order.total || 0), 0);
-      return total;
     });
 
     const productTotals = new Map<string, number>();
@@ -156,18 +126,13 @@ export function useVendorSales(shopId: string | null | undefined) {
       }
     }
 
-    const topProducts = [...productTotals.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 4)
-      .map(([name, sold]) => ({ name, sold }));
-
     return {
       revenue,
       availableToWithdraw,
       ordersToday,
       avgBasket,
-      weekRevenue: dayTotals,
-      topProducts,
+      weekRevenue,
+      topProducts: [...productTotals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([name, sold]) => ({ name, sold })),
       recentOrders: orders.slice(0, 4),
     };
   }, [orders]);
@@ -175,27 +140,13 @@ export function useVendorSales(shopId: string | null | undefined) {
   async function refresh() {
     if (!shopId) return;
     setRefreshing(true);
-    const { data, error } = await supabase
-      .from("orders")
-      .select(
-        "id, order_code, placed_at, status, total, subtotal, delivery_fee, items_count, hall, room, line_items, shop_name, delivery_address, rider_name, rider_phone, bundle, note",
-      )
-      .eq("shop_id", shopId)
-      .order("placed_at", { ascending: false });
-
-    if (!error) {
-      const next = (data ?? []).map(mapOrder);
-      orderCache.set(shopId, next);
-      setOrders(next);
-    }
+    const payload = await backendRequest<VendorSalesPayload>("/vendor/orders");
+    const next = payload.orders ?? [];
+    orderCache.set(shopId, next);
+    setOrders(next);
     setRefreshing(false);
   }
 
-  return {
-    orders,
-    summary,
-    loading,
-    refreshing,
-    refresh,
-  };
+  return { orders, summary, loading, refreshing, refresh };
 }
+
