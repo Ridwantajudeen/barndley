@@ -4,6 +4,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { riderNav } from "@/components/RiderNav";
 import { formatNaira } from "@/lib/mock";
 import { useRiderOrders } from "@/lib/rider-workspace";
+import { useRiderHistory } from "@/lib/rider-workspace";
 
 export const Route = createFileRoute("/rider/trips")({
   head: () => ({ meta: [{ title: "Trips - Rider" }] }),
@@ -66,6 +67,50 @@ function RiderTrips() {
           ))}
         </div>
       )}
+
+      <HistorySection />
     </MobileShell>
+  );
+}
+
+function HistorySection() {
+  const { orders, loading } = useRiderHistory();
+  const navigate = useNavigate();
+
+  if (loading && orders.length === 0) return null;
+
+  if (!orders || orders.length === 0) {
+    return (
+      <div className="mt-6 card-soft p-4 text-sm text-foreground/60">
+        You have no past trips yet.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-6">
+      <h3 className="font-display text-lg mb-3">History</h3>
+      <div className="space-y-3">
+        {orders.map((trip) => (
+          <button
+            key={trip.id}
+            type="button"
+            onClick={() => navigate({ to: "/rider/trips/$id", params: { id: trip.id } })}
+            className={"w-full text-left card p-3 hover:shadow-md transition-shadow"}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="font-semibold text-sm truncate">{trip.shop_name} → {trip.delivery_address}</div>
+                <div className="text-xs text-foreground/60 mt-0.5">{new Date(trip.placed_at).toLocaleString()} · {trip.order_code}</div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="font-display">{formatNaira(trip.delivery_fee)}</div>
+                <span className={"chip"}>{String(trip.status)}</span>
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }

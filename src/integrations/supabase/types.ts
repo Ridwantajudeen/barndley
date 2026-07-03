@@ -333,7 +333,8 @@ export type Database = {
         | "Student contacted"
         | "Picking items"
         | "Delivering"
-        | "Delivered";
+        | "Delivered"
+        | "Student confirmed";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -470,6 +471,7 @@ export const Constants = {
         "Picking items",
         "Delivering",
         "Delivered",
+        "Student confirmed",
       ],
     },
   },

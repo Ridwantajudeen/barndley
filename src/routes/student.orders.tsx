@@ -50,7 +50,7 @@ function OrdersPage() {
                         {new Date(order.placed_at).toLocaleString()} · {order.items_count} items
                       </div>
                     </div>
-                    <span className={"chip " + (String(order.status) === "Delivered" ? "" : "chip-accent")}>
+                    <span className={"chip " + (["Delivered", "Student confirmed"].includes(String(order.status)) ? "" : "chip-accent")}>
                       {String(order.status)}
                     </span>
                   </div>

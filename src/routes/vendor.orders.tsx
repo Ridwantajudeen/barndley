@@ -4,6 +4,7 @@ import { Bike, Clock, LoaderCircle, MapPin, MessageCircle, Package, Phone, User,
 import { MobileShell } from "@/components/MobileShell";
 import { vendorNav } from "@/components/VendorNav";
 import { formatNaira } from "@/lib/mock";
+import { backendRequest } from "@/lib/backend";
 import { useVendorSales, type VendorOrder } from "@/lib/vendor-sales";
 import { useVendorShop } from "@/lib/vendor-shop";
 
@@ -19,8 +20,21 @@ export const Route = createFileRoute("/vendor/orders")({
 
 function VendorOrders() {
   const { shop, loading: shopLoading } = useVendorShop();
-  const { orders, loading, refreshing } = useVendorSales(shop?.id ?? null);
+  const { orders, loading, refreshing, refresh } = useVendorSales(shop?.id ?? null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [savingOrderId, setSavingOrderId] = useState<string | null>(null);
+
+  async function confirmOrder(orderId: string) {
+    setSavingOrderId(orderId);
+    try {
+      await backendRequest(`/vendor/orders/${encodeURIComponent(orderId)}/confirm`, {
+        method: "PUT",
+      });
+      await refresh();
+    } finally {
+      setSavingOrderId(null);
+    }
+  }
 
   const displayOrders = orders.map((order) => ({
     ...order,
@@ -92,7 +106,8 @@ function VendorOrders() {
 
 function OrderModal({ order, onClose }: { order: DisplayOrder; onClose: () => void }) {
   const riderAssigned = Boolean(order.rider_name || order.rider_phone);
-  const statusNote = getOrderStatusNote(String(order.status));
+  const status = String(order.status);
+  const statusNote = getOrderStatusNote(status);
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center" onClick={onClose}>
@@ -187,6 +202,25 @@ function OrderModal({ order, onClose }: { order: DisplayOrder; onClose: () => vo
             </div>
           </section>
 
+          {status === "Placed" ? (
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => confirmOrder(order.id)}
+                className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold"
+                disabled={savingOrderId === order.id}
+              >
+                {savingOrderId === order.id ? (
+                  <span className="inline-flex items-center gap-2">
+                    <LoaderCircle className="size-4 animate-spin" /> Confirming...
+                  </span>
+                ) : (
+                  "Confirm order"
+                )}
+              </button>
+            </div>
+          ) : null}
+
           <section>
             <div className="text-[0.65rem] uppercase tracking-wide text-foreground/60 font-semibold mb-2">Rider</div>
             {riderAssigned ? (
@@ -224,6 +258,8 @@ function OrderModal({ order, onClose }: { order: DisplayOrder; onClose: () => vo
 
 function getOrderStatusNote(status: string) {
   switch (status) {
+    case "Vendor confirmed":
+      return "Your shop has confirmed the order and it is ready for pickup.";
     case "Rider en route to shop":
       return "The rider is on the way to collect the order.";
     case "Picked up":
@@ -234,6 +270,8 @@ function getOrderStatusNote(status: string) {
       return "The rider is on the way to the student.";
     case "Delivered":
       return "The order has been completed.";
+    case "Student confirmed":
+      return "The student confirmed receipt of the order.";
     default:
       return "The order is waiting for the next update.";
   }

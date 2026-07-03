@@ -63,7 +63,7 @@ function RiderHome() {
         <Mini label="Available" value={String(availableOrders.length)} />
         <Mini label="Active" value={String(summary.activeTrips)} />
         <Mini label="Completed" value={String(summary.completedTrips)} />
-        <Mini label="Today" value={formatNaira(summary.todayEarnings)} />
+        <Mini label="Made today" value={formatNaira(summary.todayEarnings)} />
       </div>
 
       {activeOrder ? (

@@ -337,7 +337,8 @@ export type OrderStatus =
   | "Student contacted"
   | "Picking items"
   | "Delivering"
-  | "Delivered";
+  | "Delivered"
+  | "Student confirmed";
 
 export const orderStages: OrderStatus[] = [
   "Placed",
@@ -346,6 +347,7 @@ export const orderStages: OrderStatus[] = [
   "Picked up",
   "Student contacted",
   "Delivered",
+  "Student confirmed",
 ];
 
 export const sampleOrders = [

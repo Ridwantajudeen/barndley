@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
 import { riderNav } from "@/components/RiderNav";
 import { formatNaira } from "@/lib/mock";
-import { useRiderOrders } from "@/lib/rider-workspace";
+import { buildRiderStatementEntries, useRiderHistory, useRiderOrders } from "@/lib/rider-workspace";
 
 export const Route = createFileRoute("/rider/earnings")({
   head: () => ({ meta: [{ title: "Earnings - Rider" }] }),
@@ -10,8 +10,9 @@ export const Route = createFileRoute("/rider/earnings")({
 });
 
 function RiderEarnings() {
-  const { summary, assignedOrders } = useRiderOrders();
-  const recentPayouts = assignedOrders.filter((order) => String(order.status) === "Delivered").slice(0, 5);
+  const { summary } = useRiderOrders();
+  const { orders } = useRiderHistory();
+  const recentPayouts = buildRiderStatementEntries(orders).slice(0, 5);
 
   return (
     <MobileShell nav={riderNav} title="Earnings">
@@ -39,13 +40,13 @@ function RiderEarnings() {
           <div className="text-sm text-foreground/60">Completed trips will appear here once they are delivered.</div>
         ) : (
           <ul className="divide-y divide-border/60">
-            {recentPayouts.map((order) => (
-              <li key={order.id} className="py-3 flex items-center justify-between text-sm">
+            {recentPayouts.map((entry) => (
+              <li key={entry.id} className="py-3 flex items-center justify-between text-sm">
                 <div>
-                  <div>Trip payout - {order.shop_name}</div>
-                  <div className="text-xs text-foreground/60">{new Date(order.placed_at).toLocaleDateString()}</div>
+                  <div>{entry.label}</div>
+                  <div className="text-xs text-foreground/60">{new Date(entry.date).toLocaleDateString()}</div>
                 </div>
-                <div className="font-display">{formatNaira(order.delivery_fee)}</div>
+                <div className="font-display">{formatNaira(entry.amount)}</div>
               </li>
             ))}
           </ul>

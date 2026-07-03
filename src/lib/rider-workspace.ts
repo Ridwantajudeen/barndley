@@ -226,7 +226,10 @@ export function useRiderOrders() {
 
   const orders = payload?.orders ?? [];
   const assignedOrders = useMemo(() => orders.filter((order) => order.rider_user_id && String(order.status) !== "Delivered"), [orders]);
-  const availableOrders = useMemo(() => orders.filter((order) => !order.rider_user_id && String(order.status) !== "Delivered"), [orders]);
+  const availableOrders = useMemo(
+    () => orders.filter((order) => !order.rider_user_id && String(order.status) === "Vendor confirmed"),
+    [orders],
+  );
   const activeOrder = payload?.activeOrder ?? assignedOrders[0] ?? null;
   const summary = payload?.summary ?? {
     availableToWithdraw: 0,
@@ -333,15 +336,54 @@ export function useRiderOrder(orderId: string | undefined) {
   };
 }
 
+export function useRiderHistory() {
+  const [orders, setOrders] = useState<RiderOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const payload = await backendRequest<{ orders: RiderOrder[] }>("/rider/orders/history");
+      if (cancelled) return;
+      setOrders((payload.orders ?? []).map((o) => ({ ...o })));
+      setLoading(false);
+    })().catch(() => {
+      if (!cancelled) setLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function refresh() {
+    setSyncing(true);
+    try {
+      const payload = await backendRequest<{ orders: RiderOrder[] }>("/rider/orders/history");
+      setOrders((payload.orders ?? []).map((o) => ({ ...o })));
+      return payload.orders ?? [];
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  return { orders, loading, syncing, refresh };
+}
+
 export function buildRiderStatementEntries(orders: RiderOrder[]) {
   return orders
     .filter((order) => String(order.status) === "Delivered")
-    .map((order) => ({
-      id: order.id,
-      label: `Trip payout · ${order.shop_name}`,
-      ref: order.order_code,
-      amount: Number(order.delivery_fee || 0),
-      date: order.placed_at,
-    }))
+    .map((order) => {
+      const payout = Math.round(Number(order.delivery_fee || 0) * 0.85);
+      return {
+        id: order.id,
+        label: `Trip payout · ${order.shop_name}`,
+        ref: order.order_code,
+        amount: payout,
+        date: order.placed_at,
+      };
+    })
     .sort((a, b) => +new Date(b.date) - +new Date(a.date));
 }

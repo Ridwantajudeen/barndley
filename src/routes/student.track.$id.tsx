@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { backendRequest } from "@/lib/backend";
 import { MobileShell } from "@/components/MobileShell";
 import { studentNav } from "@/components/StudentNav";
 import { formatNaira } from "@/lib/mock";
@@ -23,14 +24,29 @@ const ORDER_STEPS = [
   "Picked up",
   "Student contacted",
   "Delivered",
+  "Student confirmed",
 ] as const;
 
 function TrackPage() {
   const { id } = Route.useParams();
   const { profile } = useStudentProfile();
-  const { order, loading, refreshing } = useStudentOrder(id);
+  const { order, loading, refreshing, refresh } = useStudentOrder(id);
   const [chatWith, setChatWith] = useState<null | { name: string; avatar: string }>(null);
   const [callWith, setCallWith] = useState<null | { name: string; avatar: string; phone: string }>(null);
+  const [confirmingReceipt, setConfirmingReceipt] = useState(false);
+
+  async function handleConfirmReceipt() {
+    if (!order) return;
+    setConfirmingReceipt(true);
+    try {
+      await backendRequest(`/student/orders/${encodeURIComponent(order.id)}/confirm`, {
+        method: "PUT",
+      });
+      await refresh();
+    } finally {
+      setConfirmingReceipt(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -75,7 +91,7 @@ function TrackPage() {
             </div>
             <div className="mt-2 text-sm text-foreground/70">{getStatusNote(String(order.status))}</div>
           </div>
-          <span className={"chip " + (String(order.status) === "Delivered" ? "" : "chip-accent")}>
+          <span className={"chip " + (["Delivered", "Student confirmed"].includes(String(order.status)) ? "" : "chip-accent")}>
             {String(order.status)}
           </span>
         </div>
@@ -147,6 +163,27 @@ function TrackPage() {
         />
       </div>
 
+      {order.status === "Delivered" ? (
+        <button
+          type="button"
+          onClick={handleConfirmReceipt}
+          disabled={confirmingReceipt}
+          className="mt-5 w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm"
+        >
+          {confirmingReceipt ? (
+            <span className="inline-flex items-center justify-center gap-2">
+              <LoaderCircle className="size-4 animate-spin" /> Confirming receipt
+            </span>
+          ) : (
+            "Confirm receipt"
+          )}
+        </button>
+      ) : order.status === "Student confirmed" ? (
+        <div className="mt-5 rounded-2xl bg-primary-soft p-4 text-center text-sm font-semibold text-primary">
+          Receipt confirmed. Thank you.
+        </div>
+      ) : null}
+
       <Link to="/student/orders" className="mt-5 block text-center py-3 rounded-2xl bg-secondary font-semibold text-sm">
         Back to orders
       </Link>
@@ -175,6 +212,8 @@ function getStepIndex(status: string) {
       return 4;
     case "Delivered":
       return 5;
+    case "Student confirmed":
+      return 6;
     default:
       return 0;
   }

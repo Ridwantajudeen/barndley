@@ -13,7 +13,8 @@ do $$ begin
     'Rider en route to shop',
     'Picking items',
     'Delivering',
-    'Delivered'
+    'Delivered',
+    'Student confirmed'
   );
 exception
   when duplicate_object then null;
