@@ -33,7 +33,9 @@ export default async function handler(req: import('http').IncomingMessage, res: 
   const request = new Request(url.toString(), {
     method: req.method,
     headers,
-    body: bodyBuffer.length ? bodyBuffer : undefined,
+    body: bodyBuffer.length
+      ? bodyBuffer.buffer.slice(bodyBuffer.byteOffset, bodyBuffer.byteOffset + bodyBuffer.byteLength)
+      : undefined,
   });
 
   const response = await server.fetch(request, process.env, undefined);
