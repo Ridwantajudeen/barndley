@@ -177,19 +177,33 @@ export function useRiderOrders() {
   useEffect(() => {
     let cancelled = false;
 
-    (async () => {
-      setLoading(true);
+    async function loadOrders() {
       const next = await backendRequest<RiderPayload>("/rider/orders");
       if (cancelled) return;
       setPayload(storeRiderPayload(next));
-      setLoading(false);
-      setSyncing(false);
-    })().catch(() => {
-      if (!cancelled) setLoading(false);
-    });
+    }
+
+    setLoading(true);
+    loadOrders()
+      .then(() => {
+        if (!cancelled) {
+          setLoading(false);
+          setSyncing(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    const interval = window.setInterval(() => {
+      loadOrders().catch(() => {
+        /* ignore polling errors */
+      });
+    }, 10000);
 
     return () => {
       cancelled = true;
+      window.clearInterval(interval);
     };
   }, []);
 

@@ -8,10 +8,7 @@ import { backendRequest } from "@/lib/backend";
 import { useVendorSales, type VendorOrder } from "@/lib/vendor-sales";
 import { useVendorShop } from "@/lib/vendor-shop";
 
-type DisplayOrder = VendorOrder & {
-  customerName: string;
-  customerPhone: string | null;
-};
+type DisplayOrder = VendorOrder;
 
 export const Route = createFileRoute("/vendor/orders")({
   head: () => ({ meta: [{ title: "Orders - Vendor" }] }),
@@ -38,8 +35,6 @@ function VendorOrders() {
 
   const displayOrders = orders.map((order) => ({
     ...order,
-    customerName: order.customer_name || "Customer",
-    customerPhone: order.customer_phone ?? null,
   })) satisfies DisplayOrder[];
 
   const active = displayOrders.find((order) => order.id === openId) || null;
@@ -76,7 +71,6 @@ function VendorOrders() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="font-semibold text-sm">{order.order_code || order.id}</div>
-                      <div className="text-xs text-foreground/60 mt-0.5">{order.customerName}</div>
                       <div className="text-xs text-foreground/50 mt-0.5">
                         {new Date(order.placed_at).toLocaleString()} · {order.items_count} items
                       </div>
@@ -97,14 +91,31 @@ function VendorOrders() {
             )}
           </div>
 
-          {active && <OrderModal order={active} onClose={() => setOpenId(null)} />}
+          {active && (
+            <OrderModal
+              order={active}
+              onClose={() => setOpenId(null)}
+              savingOrderId={savingOrderId}
+              onConfirm={confirmOrder}
+            />
+          )}
         </>
       )}
     </MobileShell>
   );
 }
 
-function OrderModal({ order, onClose }: { order: DisplayOrder; onClose: () => void }) {
+function OrderModal({
+  order,
+  onClose,
+  savingOrderId,
+  onConfirm,
+}: {
+  order: DisplayOrder;
+  onClose: () => void;
+  savingOrderId: string | null;
+  onConfirm: (orderId: string) => Promise<void>;
+}) {
   const riderAssigned = Boolean(order.rider_name || order.rider_phone);
   const status = String(order.status);
   const statusNote = getOrderStatusNote(status);
@@ -140,27 +151,9 @@ function OrderModal({ order, onClose }: { order: DisplayOrder; onClose: () => vo
           </div>
 
           <section>
-            <div className="text-[0.65rem] uppercase tracking-wide text-foreground/60 font-semibold mb-2">Customer</div>
-            <div className="flex items-center gap-3 bg-secondary/60 rounded-2xl p-3">
-              <span className="h-10 w-10 rounded-xl bg-foreground text-background flex items-center justify-center">
-                <User className="size-4" />
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold">{order.customerName}</div>
-                <div className="text-[0.7rem] text-foreground/60 flex items-center gap-1">
-                  <MapPin className="size-3" /> {order.delivery_address}
-                </div>
-              </div>
-              {order.customerPhone && (
-                <>
-                  <a href={`sms:${order.customerPhone}`} className="h-9 w-9 rounded-lg bg-background flex items-center justify-center">
-                    <MessageCircle className="size-4" />
-                  </a>
-                  <a href={`tel:${order.customerPhone}`} className="h-9 w-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
-                    <Phone className="size-4" />
-                  </a>
-                </>
-              )}
+            <div className="text-[0.65rem] uppercase tracking-wide text-foreground/60 font-semibold mb-2">Delivery</div>
+            <div className="rounded-2xl bg-secondary/60 p-3 text-sm text-foreground/60">
+              {order.delivery_address}
             </div>
           </section>
 
@@ -206,7 +199,7 @@ function OrderModal({ order, onClose }: { order: DisplayOrder; onClose: () => vo
             <div className="mt-4">
               <button
                 type="button"
-                onClick={() => confirmOrder(order.id)}
+                onClick={() => onConfirm(order.id)}
                 className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold"
                 disabled={savingOrderId === order.id}
               >
